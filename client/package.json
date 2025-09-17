@@ -1,0 +1,1 @@
+{"name":"posta-client","version":"1.0.0","scripts":{"start":"cd .. && node server/src/index.js","dev":"echo Client dev server"},"devDependencies":{}}
