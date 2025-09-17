@@ -82,6 +82,14 @@ builder.Services.AddScoped<ImapEmailService>();
 builder.Services.AddScoped<IEmailSyncService, EmailSyncService>();
 builder.Services.AddHostedService<EmailSyncBackgroundService>();
 
+// Autodiscovery Services
+builder.Services.AddHttpClient<IExchangeAutodiscoverService, ExchangeAutodiscoverService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("User-Agent", "POSTA Email Client/1.0");
+});
+builder.Services.AddScoped<IExchangeAutodiscoverService, ExchangeAutodiscoverService>();
+
 // Controllers
 builder.Services.AddControllers();
 
@@ -170,4 +178,5 @@ using (var scope = app.Services.CreateScope())
 Console.WriteLine("🚀 POSTA API Server starting...");
 Console.WriteLine("📧 Email API ready for connections");
 
+// Force LSP refresh
 app.Run();

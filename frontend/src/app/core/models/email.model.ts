@@ -72,3 +72,87 @@ export interface EmailListResponse {
     total: number;
   };
 }
+
+// Account setup and discovery models
+export interface AutodiscoverRequest {
+  emailAddress: string;
+}
+
+export interface ManualDiscoverRequest {
+  emailAddress: string;
+  serverInput: string;
+}
+
+export interface TestConnectionRequest {
+  emailAddress: string;
+  username: string;
+  password: string;
+  serverConfig: ExchangeServerConfig;
+}
+
+export interface AccountCreationRequest {
+  accountName: string;
+  emailAddress: string;
+  username: string;
+  password: string;
+  serverConfig: ExchangeServerConfig;
+  displayName?: string;
+}
+
+export interface ExchangeServerConfig {
+  ewsUrl: string;
+  serverHost: string;
+  serverPort: number;
+  useSsl: boolean;
+  displayName: string;
+  autodiscoverMethod: string;
+  triedUrls: string[];
+  errorMessage?: string;
+}
+
+export interface AutodiscoverResponse {
+  success: boolean;
+  emailAddress: string;
+  config?: ExchangeServerConfig;
+  triedUrls: string[];
+  errorMessage?: string;
+  timestamp: Date;
+  suggestion?: string;
+}
+
+export interface TestConnectionResponse {
+  success: boolean;
+  message: string;
+  emailAddress: string;
+  username: string;
+  serverConfig: ExchangeServerConfig;
+  timestamp: Date;
+}
+
+export interface AccountCreationResponse {
+  success: boolean;
+  message: string;
+  account: EmailAccount;
+  timestamp: Date;
+}
+
+// Account step types for UI flow
+export type AccountSetupStep = 'email' | 'discovery' | 'manual' | 'auth' | 'testing' | 'success';
+
+export interface AccountSetupState {
+  currentStep: AccountSetupStep;
+  emailAddress: string;
+  serverConfig?: ExchangeServerConfig;
+  credentials?: {
+    username: string;
+    password: string;
+  };
+  accountDetails?: {
+    accountName: string;
+    displayName?: string;
+  };
+  discoveryResult?: AutodiscoverResponse;
+  testResult?: TestConnectionResponse;
+  isLoading: boolean;
+  error?: string;
+}

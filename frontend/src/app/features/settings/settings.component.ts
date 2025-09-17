@@ -1,17 +1,22 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { AppState } from '../../store/app.reducer';
 import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
+import { MatBadgeModule } from '@angular/material/badge';
 
 import { selectTheme } from '../../store/ui/ui.selectors';
 import { selectUser } from '../../store/auth/auth.selectors';
+import { selectAllAccounts, selectActiveAccountsCount } from '../../store/accounts/accounts.selectors';
 import { UIActions } from '../../store/ui/ui.actions';
 import { AuthActions } from '../../store/auth/auth.actions';
+import { AccountsActions } from '../../store/accounts/accounts.actions';
 
 @Component({
   selector: 'app-settings',
@@ -23,12 +28,54 @@ import { AuthActions } from '../../store/auth/auth.actions';
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
-    MatListModule
+    MatListModule,
+    MatBadgeModule
   ],
   template: `
     <div class="settings-container">
       <div class="settings-content">
         <h1 class="page-title">Settings</h1>
+
+        <!-- Email Accounts -->
+        <mat-card class="settings-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>email</mat-icon>
+              Email Accounts
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (accounts() && accounts().length > 0) {
+              <div class="accounts-list">
+                @for (account of accounts(); track account.id) {
+                  <div class="account-item">
+                    <div class="account-info">
+                      <div class="account-name">{{ account.displayName || account.email }}</div>
+                      <div class="account-email">{{ account.email }}</div>
+                      <div class="account-type">{{ account.provider }}</div>
+                    </div>
+                    <div class="account-actions">
+                      <button mat-icon-button color="primary">
+                        <mat-icon>settings</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="no-accounts">
+                <mat-icon color="primary">add_circle_outline</mat-icon>
+                <p>No email accounts configured. Add your first account to get started.</p>
+              </div>
+            }
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-raised-button color="primary" (click)="navigateToAddAccount()">
+              <mat-icon>add</mat-icon>
+              Add Account
+            </button>
+          </mat-card-actions>
+        </mat-card>
 
         <!-- User Profile -->
         <mat-card class="settings-card">
@@ -292,6 +339,62 @@ import { AuthActions } from '../../store/auth/auth.actions';
       margin: 16px 0;
     }
 
+    .accounts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .account-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .account-info {
+      flex: 1;
+    }
+
+    .account-name {
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.87);
+      margin-bottom: 4px;
+    }
+
+    .account-email {
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 0.875rem;
+      margin-bottom: 4px;
+    }
+
+    .account-type {
+      color: rgba(0, 0, 0, 0.5);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .account-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .no-accounts {
+      text-align: center;
+      padding: 48px 24px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .no-accounts mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+
     mat-list-item {
       height: auto !important;
       padding: 16px 0;
@@ -311,10 +414,18 @@ import { AuthActions } from '../../store/auth/auth.actions';
   `]
 })
 export class SettingsComponent {
-  private store = inject(Store);
+  private store = inject(Store<AppState>);
+  private router = inject(Router);
 
   user = this.store.selectSignal(selectUser);
   theme = this.store.selectSignal(selectTheme);
+  accounts = this.store.selectSignal(selectAllAccounts);
+  accountsCount = this.store.selectSignal(selectActiveAccountsCount);
+
+  ngOnInit(): void {
+    // Load accounts when component initializes
+    this.store.dispatch(AccountsActions.loadAccounts());
+  }
 
   toggleTheme(): void {
     this.store.dispatch(UIActions.toggleTheme());
@@ -322,5 +433,9 @@ export class SettingsComponent {
 
   logout(): void {
     this.store.dispatch(AuthActions.logout());
+  }
+
+  navigateToAddAccount(): void {
+    this.router.navigate(['/accounts/add']);
   }
 }

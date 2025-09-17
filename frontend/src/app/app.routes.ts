@@ -51,6 +51,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
   },
   {
+    path: 'accounts',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'add',
+        loadComponent: () => import('./features/accounts/add-account/add-account.component').then(m => m.AddAccountComponent)
+      }
+    ]
+  },
+  {
     path: '**',
     redirectTo: '/emails'
   }

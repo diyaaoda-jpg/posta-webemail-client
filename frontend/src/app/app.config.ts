@@ -14,6 +14,7 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { appReducers } from './store/app.reducer';
 import { AuthEffects } from './store/auth/auth.effects';
 import { EmailEffects } from './store/email/email.effects';
+import { AccountsEffects } from './store/accounts/accounts.effects';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,7 +24,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor, errorInterceptor])
     ),
     provideStore(appReducers),
-    provideEffects([AuthEffects, EmailEffects]),
+    provideEffects([AuthEffects, EmailEffects, AccountsEffects]),
     // Only provide DevTools in development mode for security
     ...(isDevMode() ? [provideStoreDevtools({
       maxAge: 25,
