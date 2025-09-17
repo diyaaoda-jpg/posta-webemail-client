@@ -4,13 +4,58 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using POSTA.Infrastructure.Data;
+using POSTA.Core.Interfaces;
+using POSTA.Infrastructure.Email.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
+string GetConnectionString()
+{
+    var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (!string.IsNullOrEmpty(defaultConnection))
+        return defaultConnection;
+    
+    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+    if (string.IsNullOrEmpty(databaseUrl))
+        throw new InvalidOperationException("No database connection string found. Please set DATABASE_URL environment variable or DefaultConnection in configuration.");
+    
+    // Parse DATABASE_URL format: postgresql://user:password@host:port/database?options
+    if (Uri.TryCreate(databaseUrl, UriKind.Absolute, out var uri) && uri.Scheme == "postgresql")
+    {
+        var userInfo = uri.UserInfo.Split(':');
+        var database = uri.AbsolutePath.TrimStart('/');
+        
+        // Handle query parameters from the URL
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        
+        var port = uri.Port == -1 ? 5432 : uri.Port; // Default PostgreSQL port if not specified
+        var connectionString = $"Host={uri.Host};Port={port};Database={database};Username={userInfo[0]}";
+        
+        if (userInfo.Length > 1)
+        {
+            connectionString += $";Password={Uri.UnescapeDataString(userInfo[1])}";
+        }
+        
+        // Add SSL configuration
+        if (query["sslmode"] != null)
+        {
+            connectionString += $";SSL Mode={query["sslmode"]}";
+        }
+        else if (!builder.Environment.IsDevelopment())
+        {
+            connectionString += ";SSL Mode=Require;Trust Server Certificate=true";
+        }
+        
+        return connectionString;
+    }
+    
+    // If it's already in the correct format, use it as is
+    return databaseUrl;
+}
+
 builder.Services.AddDbContext<POSTADbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? Environment.GetEnvironmentVariable("DATABASE_URL")));
+    options.UseNpgsql(GetConnectionString()));
 
 // Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -30,6 +75,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+// Email Services
+builder.Services.AddScoped<EwsEmailService>();
+builder.Services.AddScoped<ImapEmailService>();
+builder.Services.AddScoped<IEmailSyncService, EmailSyncService>();
+builder.Services.AddHostedService<EmailSyncBackgroundService>();
 
 // Controllers
 builder.Services.AddControllers();

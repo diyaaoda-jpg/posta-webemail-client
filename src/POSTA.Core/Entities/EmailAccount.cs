@@ -36,6 +36,14 @@ public class EmailAccount
     
     public bool UseSsl { get; set; } = true;
     
+    [MaxLength(255)]
+    public string? SmtpHost { get; set; }
+    
+    public int? SmtpPort { get; set; }
+    
+    [MaxLength(255)]
+    public string? DisplayName { get; set; }
+    
     public bool IsActive { get; set; } = true;
     
     public DateTime? LastSyncAt { get; set; }
