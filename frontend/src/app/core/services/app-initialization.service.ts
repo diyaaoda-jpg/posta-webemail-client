@@ -17,8 +17,7 @@ export class AppInitializationService {
       // Initialize SignalR connection for real-time updates
       await this.signalRService.initialize();
 
-      // Load initial data
-      this.store.dispatch(EmailActions.loadAccounts());
+      // Skip loading accounts during onboarding - accounts will be loaded after setup
 
       console.log('POSTA Email Client initialization completed successfully');
     } catch (error) {

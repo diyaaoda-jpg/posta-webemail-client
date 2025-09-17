@@ -43,20 +43,19 @@ import { AccountSetupStep, AccountSetupState } from '../../../core/models/email.
     SuccessStepComponent
   ],
   template: `
-    <div class="add-account-container">
-      <mat-toolbar class="add-account-toolbar">
-        <button mat-icon-button (click)="goBack()">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-        <span>Add Email Account</span>
-        <span class="spacer"></span>
-        @if (setupState().isLoading) {
-          <mat-spinner diameter="24"></mat-spinner>
-        }
-      </mat-toolbar>
+    <div class="onboarding-container">
+      <div class="onboarding-header">
+        <div class="welcome-content">
+          <h1 class="welcome-title">Welcome to POSTA Email Client</h1>
+          <p class="welcome-subtitle">Let's set up your first email account to get started</p>
+          @if (setupState().isLoading) {
+            <mat-spinner diameter="32" class="loading-spinner"></mat-spinner>
+          }
+        </div>
+      </div>
 
-      <div class="add-account-content">
-        <mat-card class="setup-card">
+      <div class="onboarding-content">
+        <mat-card class="onboarding-card">
           <mat-card-content>
             <mat-stepper orientation="horizontal" [linear]="true" #stepper>
               
@@ -135,33 +134,56 @@ import { AccountSetupStep, AccountSetupState } from '../../../core/models/email.
     </div>
   `,
   styles: [`
-    .add-account-container {
+    .onboarding-container {
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      background: #fafafa;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    .add-account-toolbar {
-      background: white;
-      color: rgba(0, 0, 0, 0.87);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    .onboarding-header {
+      background: transparent;
+      padding: 40px 24px 20px;
+      text-align: center;
     }
 
-    .spacer {
-      flex: 1 1 auto;
+    .welcome-content {
+      max-width: 600px;
+      margin: 0 auto;
     }
 
-    .add-account-content {
+    .welcome-title {
+      color: white;
+      font-size: 2.5rem;
+      font-weight: 300;
+      margin: 0 0 16px 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .welcome-subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.25rem;
+      margin: 0 0 24px 0;
+      font-weight: 300;
+    }
+
+    .loading-spinner {
+      margin: 16px auto;
+    }
+
+    .onboarding-content {
       flex: 1;
-      padding: 24px;
+      padding: 0 24px 40px;
       overflow-y: auto;
     }
 
-    .setup-card {
+    .onboarding-card {
       max-width: 800px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 32px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     }
 
     ::ng-deep .mat-stepper-horizontal {
@@ -216,9 +238,7 @@ export class AddAccountComponent {
     this.store.dispatch(AccountsActions.clearAccountSetup());
   }
 
-  goBack(): void {
-    this.router.navigate(['/settings']);
-  }
+  // Removed goBack method since this is now the primary onboarding entry point
 
   isStepCompleted(step: AccountSetupStep): boolean {
     const state = this.setupState();
@@ -291,5 +311,7 @@ export class AddAccountComponent {
 
   onFinishSetup(): void {
     this.store.dispatch(AccountsActions.createAccount());
+    // Navigate to main email interface after successful setup
+    this.router.navigate(['/emails']);
   }
 }

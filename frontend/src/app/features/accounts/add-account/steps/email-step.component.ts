@@ -21,8 +21,8 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
   template: `
     <div class="step-container">
       <div class="step-header">
-        <h2>Enter Your Email Address</h2>
-        <p>We'll automatically discover your server settings</p>
+        <h2>What's your email address?</h2>
+        <p>We'll automatically find your email settings</p>
       </div>
 
       <form [formGroup]="emailForm" (ngSubmit)="onSubmit()" class="email-form">
@@ -32,7 +32,7 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
             matInput 
             type="email" 
             formControlName="email"
-            placeholder="john.doe@worldposta.com">
+            placeholder="you@company.com">
           <mat-icon matSuffix>email</mat-icon>
           @if (emailForm.get('email')?.hasError('required') && emailForm.get('email')?.touched) {
             <mat-error>Email address is required</mat-error>
@@ -48,18 +48,19 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
             color="primary" 
             type="submit"
             [disabled]="emailForm.invalid">
-            Continue
+            Get Started
             <mat-icon>arrow_forward</mat-icon>
           </button>
         </div>
       </form>
 
       <div class="help-section">
-        <h3>What happens next?</h3>
+        <h3>Why do we need this?</h3>
         <ul>
-          <li>We'll automatically discover your email server settings</li>
-          <li>If successful, you'll just need to enter your password</li>
-          <li>If not found, we'll help you configure it manually</li>
+          <li>We'll detect your email provider automatically (Gmail, Outlook, etc.)</li>
+          <li>No need to remember server names or port numbers</li>
+          <li>If we can't detect it, we'll guide you through manual setup</li>
+          <li>Your credentials are always stored securely on your device</li>
         </ul>
       </div>
     </div>

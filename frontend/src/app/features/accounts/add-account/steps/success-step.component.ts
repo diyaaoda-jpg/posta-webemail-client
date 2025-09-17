@@ -24,10 +24,10 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
           <mat-icon class="success-icon">check_circle</mat-icon>
         </div>
         
-        <h2>Account Created Successfully!</h2>
+        <h2>🎉 Welcome to POSTA!</h2>
         <p class="success-message">
-          Your email account has been set up and is ready to use. 
-          We'll start syncing your emails shortly.
+          Your email account is all set up and ready to go! 
+          We're syncing your emails now so you can start managing them right away.
         </p>
 
         <!-- Account Summary -->
@@ -104,10 +104,10 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
               <mat-divider></mat-divider>
               
               <div class="next-step">
-                <mat-icon class="step-icon">add</mat-icon>
+                <mat-icon class="step-icon">explore</mat-icon>
                 <div class="step-content">
-                  <h4>Add More Accounts</h4>
-                  <p>You can add additional email accounts anytime from settings</p>
+                  <h4>Explore Features</h4>
+                  <p>Discover email organization, search, and productivity features</p>
                 </div>
               </div>
             </div>
@@ -120,11 +120,7 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
           <div class="action-buttons">
             <button mat-raised-button color="primary" (click)="onFinishSetup()">
               <mat-icon>inbox</mat-icon>
-              Go to Inbox
-            </button>
-            <button mat-button (click)="onAddAnotherAccount()">
-              <mat-icon>add</mat-icon>
-              Add Another Account
+              Start Reading Emails
             </button>
             <button mat-button (click)="onGoToSettings()">
               <mat-icon>settings</mat-icon>

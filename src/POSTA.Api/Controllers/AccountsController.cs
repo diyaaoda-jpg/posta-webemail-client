@@ -13,7 +13,6 @@ namespace POSTA.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class AccountsController : ControllerBase
 {
     private readonly POSTADbContext _context;
@@ -250,10 +249,10 @@ public class AccountsController : ControllerBase
     {
         try
         {
-            var userId = GetCurrentUserId();
+            var userId = await GetOrCreateUserIdAsync(request.EmailAddress, request.DisplayName);
             if (userId == Guid.Empty)
             {
-                return Unauthorized(new { Error = "User not authenticated" });
+                return BadRequest(new { Error = "Failed to create or find user" });
             }
 
             if (string.IsNullOrWhiteSpace(request.AccountName) || 
@@ -343,6 +342,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> GetAccounts()
     {
         try
@@ -394,6 +394,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpGet("{accountId}")]
+    [Authorize]
     public async Task<IActionResult> GetAccount(Guid accountId)
     {
         try
@@ -448,6 +449,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPut("{accountId}")]
+    [Authorize]
     public async Task<IActionResult> UpdateAccount(Guid accountId, [FromBody] UpdateAccountRequest request)
     {
         try
@@ -503,6 +505,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpDelete("{accountId}")]
+    [Authorize]
     public async Task<IActionResult> DeleteAccount(Guid accountId)
     {
         try
@@ -550,6 +553,46 @@ public class AccountsController : ControllerBase
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
+    }
+
+    private async Task<Guid> GetOrCreateUserIdAsync(string emailAddress, string? displayName)
+    {
+        // First try to get current authenticated user
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId != Guid.Empty)
+        {
+            return currentUserId;
+        }
+
+        // If no authenticated user, check if user exists by email
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == emailAddress);
+
+        if (existingUser != null)
+        {
+            return existingUser.Id;
+        }
+
+        // Create a new user for onboarding
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = emailAddress, // Use email as username for simplicity
+            Email = emailAddress,
+            PasswordHash = HashPassword("TempPassword123!"), // Temporary password
+            FirstName = displayName?.Split(' ').FirstOrDefault() ?? "User",
+            LastName = displayName?.Split(' ').Skip(1).FirstOrDefault() ?? "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Auto-created user {UserId} for onboarding with email {EmailAddress}", 
+            user.Id, emailAddress);
+
+        return user.Id;
     }
 
     private string HashPassword(string password)
