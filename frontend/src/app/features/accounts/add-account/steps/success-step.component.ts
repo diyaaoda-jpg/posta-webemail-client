@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -348,19 +349,20 @@ export class SuccessStepComponent {
   
   @Output() finishSetup = new EventEmitter<void>();
 
+  constructor(private router: Router) {}
+
   onFinishSetup(): void {
-    this.finishSetup.emit();
+    // Navigate to emails instead of emitting event
+    this.router.navigate(['/emails']);
   }
 
   onAddAnotherAccount(): void {
-    // Could emit event or handle navigation
-    // For now, just restart the flow
-    window.location.reload(); // Simple approach - could be improved
+    // Navigate back to account setup instead of reloading
+    this.router.navigate(['/accounts/add']);
   }
 
   onGoToSettings(): void {
     // Navigate to settings page
-    // This could be handled by the parent component
-    this.finishSetup.emit();
+    this.router.navigate(['/settings']);
   }
 }

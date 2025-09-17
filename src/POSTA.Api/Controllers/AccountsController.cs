@@ -36,6 +36,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPost("discover")]
+    [AllowAnonymous]
     public async Task<IActionResult> DiscoverExchangeServer([FromBody] AutodiscoverRequest request)
     {
         try
@@ -105,6 +106,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPost("discover/manual")]
+    [AllowAnonymous]
     public async Task<IActionResult> DiscoverManualExchangeServer([FromBody] ManualDiscoverRequest request)
     {
         try
@@ -183,6 +185,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPost("test")]
+    [AllowAnonymous]
     public async Task<IActionResult> TestConnection([FromBody] TestConnectionRequest request)
     {
         try
@@ -245,6 +248,7 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> CreateAccount([FromBody] AccountCreationRequest request)
     {
         try
