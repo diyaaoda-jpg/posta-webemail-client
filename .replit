@@ -15,8 +15,9 @@ requiredFiles = [".replit", "replit.nix"]
 channel = "stable-24_05"
 
 [deployment]
-run = ["dotnet", "run"]
-deploymentTarget = "cloudrun"
+run = ["sh", "-c", "cd src/POSTA.Api && dotnet run"]
+deploymentTarget = "autoscale"
+build = ["sh", "-c", "cd src/POSTA.Api && dotnet build"]
 
 [agent]
 expertMode = true
@@ -71,7 +72,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 33427
+localPort = 32819
 externalPort = 3003
 
 [[ports]]

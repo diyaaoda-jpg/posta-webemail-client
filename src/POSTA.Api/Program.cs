@@ -9,6 +9,10 @@ using POSTA.Infrastructure.Email.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure port for deployment vs development
+var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // Database
 string GetConnectionString()
 {
