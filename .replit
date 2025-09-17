@@ -1,7 +1,7 @@
 entrypoint = "main.cs"
 
 hidden = ["bin", "obj"]
-modules = ["dotnet-7.0", "nodejs-20"]
+modules = ["dotnet-7.0", "nodejs-20", "dotnet-8.0"]
 
 [env]
 DOTNET_NOLOGO = "1"
@@ -32,15 +32,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "POSTA Email Server"
+args = "POSTA C# API Server"
 
 [[workflows.workflow]]
-name = "POSTA Email Server"
+name = "POSTA C# API Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd server && npm start"
+args = "cd src/POSTA.Api && ASPNETCORE_ENVIRONMENT=Development dotnet run --urls=\"http://0.0.0.0:3000\""
 waitForPort = 3000
 
 [workflows.workflow.metadata]
@@ -49,3 +49,7 @@ outputType = "console"
 [[ports]]
 localPort = 3000
 externalPort = 3000
+
+[[ports]]
+localPort = 45839
+externalPort = 80
