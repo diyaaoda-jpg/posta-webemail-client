@@ -34,6 +34,10 @@ author = "agent"
 task = "workflow.run"
 args = "POSTA C# API Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Angular Frontend Server"
+
 [[workflows.workflow]]
 name = "POSTA C# API Server"
 author = "agent"
@@ -46,10 +50,26 @@ waitForPort = 3000
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "Angular Frontend Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm start"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[ports]]
 localPort = 3000
 externalPort = 3000
 
 [[ports]]
-localPort = 45839
+localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 36133
+externalPort = 3001
