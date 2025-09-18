@@ -1,0 +1,33 @@
+signalr.service.ts:218 ERROR RuntimeError: NG01050: formControlName must be used with a parent formGroup directive.  You'll want to add a formGroup
+      directive and pass it an existing FormGroup instance (you can create one in your class).
+
+    Example:
+
+    
+  <div [formGroup]="myGroup">
+    <input formControlName="firstName">
+  </div>
+
+  In your class:
+
+  this.myGroup = new FormGroup({
+      firstName: new FormControl()
+  });
+    at controlParentException (forms.mjs:1555:10)
+    at _FormControlName._checkParentType (forms.mjs:5902:15)
+    at _FormControlName._setUpControl (forms.mjs:5907:10)
+    at _FormControlName.ngOnChanges (forms.mjs:5857:28)
+    at _FormControlName.rememberChangeHistoryAndInvokeOnChangesHook (core.mjs:4101:14)
+    at callHookInternal (core.mjs:5136:14)
+    at callHook (core.mjs:5167:9)
+    at callHooks (core.mjs:5118:17)
+    at executeInitAndCheckHooks (core.mjs:5068:9)
+    at refreshView (core.mjs:12806:21)
+chunk-J25FJFZE.js?v=af2680a1:55 
+ POST https://9d0463bd-8440-4942-a724-35e1e5db2bfe-00-2af0n2x3k6h0i.janeway.replit.dev:3000/emailHub/negotiate?negotiateVersion=1 404 (Not Found)
+chunk-J25FJFZE.js?v=af2680a1:49 [2025-09-18T09:53:22.249Z] Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection.
+chunk-J25FJFZE.js?v=af2680a1:49 [2025-09-18T09:53:22.250Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection.
+signalr.service.ts:80 Failed to start SignalR connection: FailedToNegotiateWithServerError: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection.
+    at rejected (chunk-J25FJFZE.js?v=af2680a1:49:29)
+signalr.service.ts:216 Scheduling SignalR reconnection in 40000ms (attempt 4)
+﻿

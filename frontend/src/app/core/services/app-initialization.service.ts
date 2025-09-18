@@ -14,8 +14,8 @@ export class AppInitializationService {
     try {
       console.log('Initializing POSTA Email Client...');
 
-      // Initialize SignalR connection for real-time updates
-      await this.signalRService.initialize();
+      // Skip SignalR initialization temporarily - will be added when backend supports it
+      // await this.signalRService.initialize();
 
       // Skip loading accounts during onboarding - accounts will be loaded after setup
 
@@ -28,7 +28,8 @@ export class AppInitializationService {
 
   async destroyApp(): Promise<void> {
     try {
-      await this.signalRService.destroy();
+      // Skip SignalR cleanup temporarily
+      // await this.signalRService.destroy();
       console.log('POSTA Email Client cleanup completed');
     } catch (error) {
       console.error('Error during app cleanup:', error);
