@@ -3,31 +3,48 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
-// Create proxy middleware for both HTTP and WebSocket (HMR)
-const proxy = createProxyMiddleware({
+// API Proxy - Route API calls to C# backend on port 3000
+const apiProxy = createProxyMiddleware({
+  target: 'http://localhost:3000',
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req, res) => {
+    proxyReq.setHeader('Host', 'localhost');
+    console.log(`🔗 API Request: ${req.method} ${req.url} → http://localhost:3000`);
+  },
+  onError: (err, req, res) => {
+    console.error('❌ API Proxy error:', err.message);
+    if (!res.headersSent) {
+      res.status(500).send('API Proxy Error: ' + err.message);
+    }
+  }
+});
+
+// Frontend Proxy - Route everything else to Angular on port 5173
+const frontendProxy = createProxyMiddleware({
   target: 'http://localhost:5173',
   changeOrigin: true,
   ws: true, // Enable WebSocket proxying for HMR
   onProxyReq: (proxyReq, req, res) => {
     // Rewrite Host header to localhost to bypass Vite's host checking
     proxyReq.setHeader('Host', 'localhost');
-    console.log(`✅ Proxying ${req.method} ${req.url} with Host: localhost`);
+    console.log(`✅ Frontend Request: ${req.method} ${req.url} → http://localhost:5173`);
   },
   onProxyReqWs: (proxyReq, req, socket, options, head) => {
     // Also rewrite Host header for WebSocket connections (HMR)
     proxyReq.setHeader('Host', 'localhost');
-    console.log(`🔄 Proxying WebSocket ${req.url} with Host: localhost`);
+    console.log(`🔄 WebSocket: ${req.url} → http://localhost:5173`);
   },
   onError: (err, req, res) => {
-    console.error('❌ Proxy error:', err.message);
+    console.error('❌ Frontend Proxy error:', err.message);
     if (!res.headersSent) {
-      res.status(500).send('Proxy Error: ' + err.message);
+      res.status(500).send('Frontend Proxy Error: ' + err.message);
     }
   }
 });
 
-// Apply proxy to all routes
-app.use('/', proxy);
+// Route API calls to C# backend, everything else to Angular
+app.use('/api', apiProxy);
+app.use('/', frontendProxy);
 
 const PORT = 5000;
 const server = app.listen(PORT, '0.0.0.0', () => {
@@ -38,4 +55,4 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 });
 
 // Handle WebSocket upgrade for HMR
-server.on('upgrade', proxy.upgrade);
+server.on('upgrade', frontendProxy.upgrade);
