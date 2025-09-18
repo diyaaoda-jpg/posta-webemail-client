@@ -1,0 +1,34 @@
+Application bundle generation complete. [0.916 seconds]
+
+▲ [WARNING] NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. [plugin angular-compiler]
+
+    src/app/features/accounts/add-account/steps/discovery-step.component.ts:93:46:
+      93 │               @if (discoveryResult.triedUrls?.length) {
+         ╵                                               ~~~~~~
+
+
+▲ [WARNING] NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. [plugin angular-compiler]
+
+    src/app/features/accounts/add-account/steps/testing-step.component.ts:84:70:
+      84 │ ...{ testResult.serverConfig?.serverHost || testResult.serverConfi...
+         ╵                               ~~~~~~~~~~
+
+
+▲ [WARNING] NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. [plugin angular-compiler]
+
+    src/app/features/accounts/add-account/steps/testing-step.component.ts:84:109:
+      84 │ ...verConfig?.serverHost || testResult.serverConfig?.ewsUrl }}</span>
+         ╵                                                      ~~~~~~
+
+
+▲ [WARNING] NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. [plugin angular-compiler]
+
+    src/app/features/accounts/add-account/steps/testing-step.component.ts:130:70:
+      130 │ ... testResult.serverConfig?.serverHost || testResult.serverConfi...
+          ╵                              ~~~~~~~~~~
+
+
+▲ [WARNING] NG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator. [plugin angular-compiler]
+
+    src/app/features/accounts/add-account/steps/testing-step.component.ts:130:109:
+      130 │ ...erConfig?.serverHost || testResult.serverConfig?.ewsUrl }}</span>

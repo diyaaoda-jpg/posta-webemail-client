@@ -279,7 +279,6 @@ export class AddAccountComponent {
   }
 
   onEmailSubmitted(email: string): void {
-    console.log('🔵 Dispatching email discovery for:', email);
     this.store.dispatch(AccountsActions.submitEmailForDiscovery({ emailAddress: email }));
   }
 

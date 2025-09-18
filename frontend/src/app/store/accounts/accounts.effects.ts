@@ -24,22 +24,18 @@ export class AccountsEffects {
     this.actions$.pipe(
       ofType(AccountsActions.submitEmailForDiscovery),
       switchMap(({ emailAddress }) => {
-        console.log('🔵 NgRx Effect triggered for email:', emailAddress);
         const request: AutodiscoverRequest = { emailAddress };
         
-        console.log('🔵 Making HTTP request to:', '/api/accounts/discover');
         return this.accountService.discoverEmailServer(request).pipe(
           map((response) => {
-            console.log('🔵 HTTP Response received:', response);
             // Always dispatch success - the reducer will handle success/failure based on response.success
             return AccountsActions.emailDiscoverySuccess({ response });
           }),
-          catchError((error) => {
-            console.error('🔴 HTTP Request failed:', error);
-            return of(AccountsActions.emailDiscoveryFailure({ 
+          catchError((error) =>
+            of(AccountsActions.emailDiscoveryFailure({ 
               error: error.message || 'Failed to discover email server settings' 
             }))
-          })
+          )
         );
       })
     )
