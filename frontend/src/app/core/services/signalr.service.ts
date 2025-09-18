@@ -33,6 +33,10 @@ export class SignalRService {
   });
 
   async startConnection(): Promise<void> {
+    if (!environment.features.pushNotifications || !environment.signalRUrl) {
+      return;
+    }
+    
     if (this.hubConnection?.state === HubConnectionState.Connected) {
       return;
     }
@@ -201,6 +205,10 @@ export class SignalRService {
   }
 
   private scheduleReconnect(): void {
+    if (!environment.features.pushNotifications || !environment.signalRUrl) {
+      return;
+    }
+    
     const currentState = this.connectionState();
     
     if (currentState.reconnectAttempts >= this.maxReconnectAttempts) {
