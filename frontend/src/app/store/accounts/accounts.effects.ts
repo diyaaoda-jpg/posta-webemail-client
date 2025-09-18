@@ -28,14 +28,8 @@ export class AccountsEffects {
         
         return this.accountService.discoverEmailServer(request).pipe(
           map((response) => {
-            // Check the actual success field in the response, not just HTTP status
-            if (response.success) {
-              return AccountsActions.emailDiscoverySuccess({ response });
-            } else {
-              return AccountsActions.emailDiscoveryFailure({ 
-                error: response.errorMessage || 'Failed to discover email server settings'
-              });
-            }
+            // Always dispatch success - the reducer will handle success/failure based on response.success
+            return AccountsActions.emailDiscoverySuccess({ response });
           }),
           catchError((error) =>
             of(AccountsActions.emailDiscoveryFailure({ 
@@ -56,14 +50,8 @@ export class AccountsEffects {
         
         return this.accountService.discoverManualServer(request).pipe(
           map((response) => {
-            // Check the actual success field in the response, not just HTTP status
-            if (response.success) {
-              return AccountsActions.manualDiscoverySuccess({ response });
-            } else {
-              return AccountsActions.manualDiscoveryFailure({ 
-                error: response.errorMessage || 'Failed to discover server settings manually'
-              });
-            }
+            // Always dispatch success - the reducer will handle success/failure based on response.success
+            return AccountsActions.manualDiscoverySuccess({ response });
           }),
           catchError((error) =>
             of(AccountsActions.manualDiscoveryFailure({ 
