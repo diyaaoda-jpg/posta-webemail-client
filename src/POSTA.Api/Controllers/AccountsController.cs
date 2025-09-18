@@ -50,22 +50,12 @@ public class AccountsController : ControllerBase
 
             var config = await _autodiscoverService.DiscoverAsync(request.EmailAddress);
 
-            if (config == null)
-            {
-                return NotFound(new 
-                { 
-                    Success = false,
-                    Error = "Autodiscovery failed - no Exchange server configuration found",
-                    EmailAddress = request.EmailAddress,
-                    Suggestion = "Try manual configuration with your server name or contact your IT administrator"
-                });
-            }
-
+            // Create a structured response regardless of success or failure
             var response = new
             {
-                Success = !string.IsNullOrEmpty(config.EwsUrl),
+                Success = config != null && !string.IsNullOrEmpty(config.EwsUrl),
                 EmailAddress = request.EmailAddress,
-                Config = new
+                Config = config != null && !string.IsNullOrEmpty(config.EwsUrl) ? new
                 {
                     config.EwsUrl,
                     config.ServerHost,
@@ -73,24 +63,28 @@ public class AccountsController : ControllerBase
                     config.UseSsl,
                     config.DisplayName,
                     config.AutodiscoverMethod
-                },
-                TriedUrls = config.TriedUrls,
-                config.ErrorMessage,
+                } : null,
+                TriedUrls = config?.TriedUrls ?? new List<string>(),
+                ErrorMessage = config?.ErrorMessage ?? "Autodiscovery failed - no Exchange server configuration found",
+                Suggestion = config == null 
+                    ? "Try manual configuration with your server name or contact your IT administrator"
+                    : "Verify your email address and try manual configuration if needed",
                 Timestamp = DateTime.UtcNow
             };
 
-            if (!string.IsNullOrEmpty(config.EwsUrl))
+            if (response.Success)
             {
                 _logger.LogInformation("Autodiscovery successful for {EmailAddress}. EWS URL: {EwsUrl}", 
-                    request.EmailAddress, config.EwsUrl);
-                return Ok(response);
+                    request.EmailAddress, config?.EwsUrl);
             }
             else
             {
                 _logger.LogWarning("Autodiscovery failed for {EmailAddress}. Tried {Count} URLs.", 
-                    request.EmailAddress, config.TriedUrls.Count);
-                return BadRequest(response);
+                    request.EmailAddress, config?.TriedUrls?.Count ?? 0);
             }
+
+            // Always return 200 OK with structured response for proper frontend handling
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -126,24 +120,13 @@ public class AccountsController : ControllerBase
 
             var config = await _autodiscoverService.DiscoverManualAsync(request.EmailAddress, request.ServerInput);
 
-            if (config == null)
-            {
-                return NotFound(new 
-                { 
-                    Success = false,
-                    Error = "Manual discovery failed - no Exchange server configuration found",
-                    EmailAddress = request.EmailAddress,
-                    ServerInput = request.ServerInput,
-                    Suggestion = "Verify the server name is correct or try the full server URL"
-                });
-            }
-
+            // Create a structured response regardless of success or failure
             var response = new
             {
-                Success = !string.IsNullOrEmpty(config.EwsUrl),
+                Success = config != null && !string.IsNullOrEmpty(config.EwsUrl),
                 EmailAddress = request.EmailAddress,
                 ServerInput = request.ServerInput,
-                Config = new
+                Config = config != null && !string.IsNullOrEmpty(config.EwsUrl) ? new
                 {
                     config.EwsUrl,
                     config.ServerHost,
@@ -151,24 +134,28 @@ public class AccountsController : ControllerBase
                     config.UseSsl,
                     config.DisplayName,
                     config.AutodiscoverMethod
-                },
-                TriedUrls = config.TriedUrls,
-                config.ErrorMessage,
+                } : null,
+                TriedUrls = config?.TriedUrls ?? new List<string>(),
+                ErrorMessage = config?.ErrorMessage ?? "Manual discovery failed - no Exchange server configuration found",
+                Suggestion = config == null
+                    ? "Verify the server name is correct or try the full server URL"
+                    : "Server was found but configuration is incomplete - try a different server address",
                 Timestamp = DateTime.UtcNow
             };
 
-            if (!string.IsNullOrEmpty(config.EwsUrl))
+            if (response.Success)
             {
                 _logger.LogInformation("Manual discovery successful for {EmailAddress}. EWS URL: {EwsUrl}", 
-                    request.EmailAddress, config.EwsUrl);
-                return Ok(response);
+                    request.EmailAddress, config?.EwsUrl);
             }
             else
             {
                 _logger.LogWarning("Manual discovery failed for {EmailAddress} with server {ServerInput}. Tried {Count} URLs.", 
-                    request.EmailAddress, request.ServerInput, config.TriedUrls.Count);
-                return BadRequest(response);
+                    request.EmailAddress, request.ServerInput, config?.TriedUrls?.Count ?? 0);
             }
+
+            // Always return 200 OK with structured response for proper frontend handling
+            return Ok(response);
         }
         catch (Exception ex)
         {
