@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -308,19 +308,23 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
     }
   `]
 })
-export class ManualConfigStepComponent {
+export class ManualConfigStepComponent implements OnInit {
   @Input() currentStep!: AccountSetupStep;
   @Input() emailAddress!: string;
   @Output() manualConfigSubmitted = new EventEmitter<{ serverInput: string; ewsUrl?: string; port?: number; useSsl?: boolean }>();
 
   private fb = inject(FormBuilder);
 
-  manualForm: FormGroup = this.fb.group({
-    serverInput: ['', [Validators.required]],
-    ewsUrl: [''],
-    port: [443],
-    useSsl: [true]
-  });
+  manualForm!: FormGroup;
+
+  ngOnInit(): void {
+    this.manualForm = this.fb.group({
+      serverInput: ['', [Validators.required]],
+      ewsUrl: [''],
+      port: [443],
+      useSsl: [true]
+    });
+  }
 
   domainFromEmail(): string {
     if (!this.emailAddress) return 'example.com';

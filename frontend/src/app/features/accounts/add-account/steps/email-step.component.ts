@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -133,16 +133,20 @@ import { AccountSetupStep } from '../../../../core/models/email.model';
     }
   `]
 })
-export class EmailStepComponent {
+export class EmailStepComponent implements OnInit {
   @Input() currentStep!: AccountSetupStep;
   @Output() stepCompleted = new EventEmitter<AccountSetupStep>();
   @Output() emailSubmitted = new EventEmitter<string>();
 
   private fb = inject(FormBuilder);
 
-  emailForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]]
-  });
+  emailForm!: FormGroup;
+
+  ngOnInit(): void {
+    this.emailForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]]
+    });
+  }
 
   onSubmit(): void {
     if (this.emailForm.valid) {

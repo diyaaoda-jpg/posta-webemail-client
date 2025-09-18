@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -309,7 +309,7 @@ import { AccountSetupStep, ExchangeServerConfig } from '../../../../core/models/
     }
   `]
 })
-export class AuthStepComponent {
+export class AuthStepComponent implements OnInit {
   @Input() currentStep!: AccountSetupStep;
   @Input() emailAddress!: string;
   @Input() serverConfig?: ExchangeServerConfig;
@@ -319,15 +319,17 @@ export class AuthStepComponent {
 
   hidePassword = true;
 
-  authForm: FormGroup = this.fb.group({
-    accountName: ['', [Validators.required]],
-    displayName: [''],
-    username: ['', [Validators.required]],
-    password: ['', [Validators.required]],
-    acceptTerms: [false, [Validators.requiredTrue]]
-  });
+  authForm!: FormGroup;
 
   ngOnInit(): void {
+    // Initialize form first
+    this.authForm = this.fb.group({
+      accountName: ['', [Validators.required]],
+      displayName: [''],
+      username: ['', [Validators.required]],
+      password: ['', [Validators.required]],
+      acceptTerms: [false, [Validators.requiredTrue]]
+    });
     // Pre-populate fields based on email address
     const emailParts = this.emailAddress.split('@');
     const username = emailParts[0];
