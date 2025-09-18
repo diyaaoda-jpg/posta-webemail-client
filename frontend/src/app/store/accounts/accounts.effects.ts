@@ -27,7 +27,16 @@ export class AccountsEffects {
         const request: AutodiscoverRequest = { emailAddress };
         
         return this.accountService.discoverEmailServer(request).pipe(
-          map((response) => AccountsActions.emailDiscoverySuccess({ response })),
+          map((response) => {
+            // Check the actual success field in the response, not just HTTP status
+            if (response.success) {
+              return AccountsActions.emailDiscoverySuccess({ response });
+            } else {
+              return AccountsActions.emailDiscoveryFailure({ 
+                error: response.errorMessage || 'Failed to discover email server settings'
+              });
+            }
+          }),
           catchError((error) =>
             of(AccountsActions.emailDiscoveryFailure({ 
               error: error.message || 'Failed to discover email server settings' 
@@ -46,7 +55,16 @@ export class AccountsEffects {
         const request: ManualDiscoverRequest = { emailAddress, serverInput };
         
         return this.accountService.discoverManualServer(request).pipe(
-          map((response) => AccountsActions.manualDiscoverySuccess({ response })),
+          map((response) => {
+            // Check the actual success field in the response, not just HTTP status
+            if (response.success) {
+              return AccountsActions.manualDiscoverySuccess({ response });
+            } else {
+              return AccountsActions.manualDiscoveryFailure({ 
+                error: response.errorMessage || 'Failed to discover server settings manually'
+              });
+            }
+          }),
           catchError((error) =>
             of(AccountsActions.manualDiscoveryFailure({ 
               error: error.message || 'Failed to discover server settings manually' 
