@@ -1,0 +1,35 @@
+signalr.service.ts:218 ERROR RuntimeError: NG01050: formControlName must be used with a parent formGroup directive.  You'll want to add a formGroup
+      directive and pass it an existing FormGroup instance (you can create one in your class).
+
+    Example:
+
+    
+  <div [formGroup]="myGroup">
+    <input formControlName="firstName">
+  </div>
+
+  In your class:
+
+  this.myGroup = new FormGroup({
+      firstName: new FormControl()
+  });
+    at controlParentException (forms.mjs:1555:10)
+    at _FormControlName._checkParentType (forms.mjs:5902:15)
+    at _FormControlName._setUpControl (forms.mjs:5907:10)
+    at _FormControlName.ngOnChanges (forms.mjs:5857:28)
+    at _FormControlName.rememberChangeHistoryAndInvokeOnChangesHook (core.mjs:4101:14)
+    at callHookInternal (core.mjs:5136:14)
+    at callHook (core.mjs:5167:9)
+    at callHooks (core.mjs:5118:17)
+    at executeInitAndCheckHooks (core.mjs:5068:9)
+    at refreshView (core.mjs:12806:21)
+
+add:1 Access to fetch at 'https://9d0463bd-8440-4942-a724-35e1e5db2bfe-00-2af0n2x3k6h0i.janeway.replit.dev:3000/emailHub/negotiate?negotiateVersion=1' from origin 'https://9d0463bd-8440-4942-a724-35e1e5db2bfe-00-2af0n2x3k6h0i.janeway.replit.dev' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'.
+chunk-J25FJFZE.js?v=af2680a1:55 
+ POST https://9d0463bd-8440-4942-a724-35e1e5db2bfe-00-2af0n2x3k6h0i.janeway.replit.dev:3000/emailHub/negotiate?negotiateVersion=1 net::ERR_FAILED
+chunk-J25FJFZE.js?v=af2680a1:49 [2025-09-18T09:32:34.836Z] Warning: Error from HTTP request. TypeError: Failed to fetch.
+chunk-J25FJFZE.js?v=af2680a1:49 [2025-09-18T09:32:34.836Z] Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+chunk-J25FJFZE.js?v=af2680a1:49 [2025-09-18T09:32:34.837Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+signalr.service.ts:80 Failed to start SignalR connection: FailedToNegotiateWithServerError: Failed to complete negotiation with the server: TypeError: Failed to fetch
+    at rejected (chunk-J25FJFZE.js?v=af2680a1:49:29)
+signalr.service.ts:216 Scheduling SignalR reconnection in 20000ms (attempt 3)
