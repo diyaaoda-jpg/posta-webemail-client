@@ -54,11 +54,12 @@ public class AccountsController : ControllerBase
             var config = await _autodiscoverService.DiscoverAsync(request.EmailAddress);
 
             // Create a structured response regardless of success or failure
+            var success = config != null && !string.IsNullOrEmpty(config.EwsUrl);
             var response = new
             {
-                Success = config != null && !string.IsNullOrEmpty(config.EwsUrl),
+                Success = success,
                 EmailAddress = request.EmailAddress,
-                Config = config != null && !string.IsNullOrEmpty(config.EwsUrl) ? new
+                Config = success ? new
                 {
                     config.EwsUrl,
                     config.ServerHost,
@@ -68,10 +69,11 @@ public class AccountsController : ControllerBase
                     config.AutodiscoverMethod
                 } : null,
                 TriedUrls = config?.TriedUrls ?? new List<string>(),
-                ErrorMessage = config?.ErrorMessage ?? "Autodiscovery failed - no Exchange server configuration found",
-                Suggestion = config == null 
-                    ? "Try manual configuration with your server name or contact your IT administrator"
-                    : "Verify your email address and try manual configuration if needed",
+                ErrorMessage = success ? null : (config?.ErrorMessage ?? "Autodiscovery failed - no Exchange server configuration found"),
+                Suggestion = success ? "Exchange server configuration found and ready for authentication" :
+                    (config == null 
+                        ? "Try manual configuration with your server name or contact your IT administrator"
+                        : "Verify your email address and try manual configuration if needed"),
                 Timestamp = DateTime.UtcNow
             };
 
@@ -124,12 +126,13 @@ public class AccountsController : ControllerBase
             var config = await _autodiscoverService.DiscoverManualAsync(request.EmailAddress, request.ServerInput);
 
             // Create a structured response regardless of success or failure
+            var success = config != null && !string.IsNullOrEmpty(config.EwsUrl);
             var response = new
             {
-                Success = config != null && !string.IsNullOrEmpty(config.EwsUrl),
+                Success = success,
                 EmailAddress = request.EmailAddress,
                 ServerInput = request.ServerInput,
-                Config = config != null && !string.IsNullOrEmpty(config.EwsUrl) ? new
+                Config = success ? new
                 {
                     config.EwsUrl,
                     config.ServerHost,
@@ -139,10 +142,11 @@ public class AccountsController : ControllerBase
                     config.AutodiscoverMethod
                 } : null,
                 TriedUrls = config?.TriedUrls ?? new List<string>(),
-                ErrorMessage = config?.ErrorMessage ?? "Manual discovery failed - no Exchange server configuration found",
-                Suggestion = config == null
-                    ? "Verify the server name is correct or try the full server URL"
-                    : "Server was found but configuration is incomplete - try a different server address",
+                ErrorMessage = success ? null : (config?.ErrorMessage ?? "Manual discovery failed - no Exchange server configuration found"),
+                Suggestion = success ? "Exchange server configuration found and ready for authentication" :
+                    (config == null
+                        ? "Verify the server name is correct or try the full server URL"
+                        : "Server was found but configuration is incomplete - try a different server address"),
                 Timestamp = DateTime.UtcNow
             };
 

@@ -207,7 +207,7 @@ namespace POSTA.Infrastructure.Email.Services
                 });
 
                 // Test by getting folder information
-                var inboxFolder = await Task.Run(() => Folder.Bind(service, WellKnownFolderName.Inbox));
+                var inboxFolder = await System.Threading.Tasks.Task.Run(() => Folder.Bind(service, WellKnownFolderName.Inbox));
                 
                 result.TestSteps.Add(new TestStep
                 {
@@ -219,7 +219,7 @@ namespace POSTA.Infrastructure.Email.Services
 
                 // Get basic folder statistics
                 var folderView = new FolderView(10);
-                var findFoldersResults = await Task.Run(() => service.FindFolders(WellKnownFolderName.MsgFolderRoot, folderView));
+                var findFoldersResults = await System.Threading.Tasks.Task.Run(() => service.FindFolders(WellKnownFolderName.MsgFolderRoot, folderView));
                 
                 result.TestSteps.Add(new TestStep
                 {

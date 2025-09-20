@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { HttpClient } from '@angular/common/http';
 import { Store } from '@ngrx/store';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -221,12 +222,14 @@ export class AddAccountComponent implements OnInit, OnDestroy {
   // State management
   discoveryResult: any = null;
   discoveryLoading = false;
+  testingResult: any = null;
+  testingLoading = false;
   currentStep = 'email';
   completedSteps = new Set<string>();
   submittedEmail = '';
   authenticationData: AuthenticationData | null = null;
 
-  constructor(private store: Store) {}
+  constructor(private store: Store, private http: HttpClient) {}
 
   ngOnInit(): void {
     // Subscribe to store selectors if using NgRx
@@ -262,24 +265,24 @@ export class AddAccountComponent implements OnInit, OnDestroy {
     // Start discovery process
     this.discoveryLoading = true;
     
-    // Simulate API call for now (replace with actual API call)
-    setTimeout(() => {
-      // Mock discovery result
-      this.discoveryResult = {
-        success: emailAddress.includes('gmail.com') || emailAddress.includes('outlook.com'),
-        config: {
-          displayName: emailAddress.includes('gmail.com') ? 'Gmail' : 
-                      emailAddress.includes('outlook.com') ? 'Microsoft Outlook' : 'Unknown Provider',
-          serverHost: emailAddress.includes('gmail.com') ? 'imap.gmail.com' : 'outlook.office365.com',
-          serverPort: 993,
-          useSsl: true
+    // Call the real API
+    this.http.post<any>('/api/accounts/discover', { EmailAddress: emailAddress })
+      .subscribe({
+        next: (result) => {
+          console.log('Discovery result:', result);
+          this.discoveryResult = result;
+          this.discoveryLoading = false;
+        },
+        error: (error) => {
+          console.error('Discovery error:', error);
+          this.discoveryResult = {
+            success: false,
+            errorMessage: 'Failed to discover email settings. Please try manual setup.',
+            suggestion: 'Check your email address and try manual configuration.'
+          };
+          this.discoveryLoading = false;
         }
-      };
-      this.discoveryLoading = false;
-    }, 2000);
-    
-    // If using NgRx, dispatch action instead:
-    // this.store.dispatch(AccountsActions.submitEmailForDiscovery({ emailAddress }));
+      });
   }
 
   proceedToAuthentication(): void {
@@ -311,11 +314,47 @@ export class AddAccountComponent implements OnInit, OnDestroy {
       this.stepper.next();
     }, 100);
     
-    // TODO: Call backend API to test connection and create account
-    // For now, simulate testing process
-    setTimeout(() => {
-      this.proceedToComplete();
-    }, 3000);
+    // Start connection testing
+    this.testingLoading = true;
+    
+    // Prepare connection test request
+    const testRequest = {
+      EmailAddress: this.submittedEmail,
+      Password: authData.password,
+      ServerHost: authData.manualConfig?.serverHost || this.discoveryResult?.config?.serverHost || 'outlook.office365.com',
+      ServerPort: authData.manualConfig?.serverPort || this.discoveryResult?.config?.serverPort || 993,
+      UseSsl: authData.manualConfig?.useSsl !== undefined ? authData.manualConfig.useSsl : (this.discoveryResult?.config?.useSsl || true),
+      EwsUrl: authData.manualConfig?.ewsUrl || this.discoveryResult?.config?.ewsUrl
+    };
+    
+    console.log('Testing connection with request:', testRequest);
+    
+    // Call the connection testing API
+    this.http.post<any>('/api/accounts/test-connection', testRequest)
+      .subscribe({
+        next: (testResult) => {
+          console.log('Connection test result:', testResult);
+          this.testingResult = testResult;
+          this.testingLoading = false;
+          
+          if (testResult.success) {
+            // If test successful, create the account
+            this.createAccount(authData);
+          } else {
+            // Handle test failure
+            console.error('Connection test failed:', testResult.errorMessage);
+          }
+        },
+        error: (error) => {
+          console.error('Connection test error:', error);
+          this.testingResult = {
+            success: false,
+            errorMessage: 'Failed to test connection. Please check your credentials.',
+            testSteps: []
+          };
+          this.testingLoading = false;
+        }
+      });
   }
 
   proceedToTesting(): void {
@@ -332,6 +371,38 @@ export class AddAccountComponent implements OnInit, OnDestroy {
     console.log('Testing completed successfully');
   }
 
+  createAccount(authData: AuthenticationData): void {
+    console.log('Creating account...');
+    
+    const createRequest = {
+      AccountName: authData.accountName || this.submittedEmail,
+      EmailAddress: this.submittedEmail,
+      Username: authData.email || this.submittedEmail,
+      Password: authData.password,
+      DisplayName: authData.displayName || this.submittedEmail.split('@')[0],
+      ServerConfig: {
+        EwsUrl: authData.manualConfig?.ewsUrl || this.discoveryResult?.config?.ewsUrl || 'https://outlook.office365.com/EWS/Exchange.asmx',
+        ServerHost: authData.manualConfig?.serverHost || this.discoveryResult?.config?.serverHost || 'outlook.office365.com',
+        ServerPort: authData.manualConfig?.serverPort || this.discoveryResult?.config?.serverPort || 993,
+        UseSsl: authData.manualConfig?.useSsl !== undefined ? authData.manualConfig.useSsl : (this.discoveryResult?.config?.useSsl || true),
+        DisplayName: this.discoveryResult?.config?.displayName || 'Email Server',
+        AutodiscoverMethod: this.discoveryResult?.config?.autodiscoverMethod || 'Manual'
+      }
+    };
+    
+    this.http.post<any>('/api/accounts', createRequest)
+      .subscribe({
+        next: (createResult) => {
+          console.log('Account created successfully:', createResult);
+          this.proceedToComplete();
+        },
+        error: (error) => {
+          console.error('Account creation error:', error);
+          // Handle account creation failure
+        }
+      });
+  }
+  
   finishSetup(): void {
     this.completedSteps.add('testing');
     this.completedSteps.add('complete');
