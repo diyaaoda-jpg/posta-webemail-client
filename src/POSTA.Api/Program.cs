@@ -86,13 +86,15 @@ builder.Services.AddScoped<ImapEmailService>();
 builder.Services.AddScoped<IEmailSyncService, EmailSyncService>();
 builder.Services.AddHostedService<EmailSyncBackgroundService>();
 
-// Autodiscovery Services
-builder.Services.AddHttpClient<IExchangeAutodiscoverService, ExchangeAutodiscoverService>(client =>
+// Autodiscovery Services - HttpClient registration includes the service registration
+builder.Services.AddHttpClient<IExchangeAutodiscoverService, POSTA.Infrastructure.Email.Services.ImprovedExchangeAutodiscoverService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("User-Agent", "POSTA Email Client/1.0");
 });
-builder.Services.AddScoped<IExchangeAutodiscoverService, ExchangeAutodiscoverService>();
+
+// Connection Testing Service
+builder.Services.AddScoped<POSTA.Core.Interfaces.IEmailConnectionTestingService, POSTA.Infrastructure.Email.Services.EmailConnectionTestingService>();
 
 // Controllers
 builder.Services.AddControllers();
