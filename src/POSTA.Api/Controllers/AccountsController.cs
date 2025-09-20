@@ -17,6 +17,7 @@ public class AccountsController : ControllerBase
 {
     private readonly POSTADbContext _context;
     private readonly IExchangeAutodiscoverService _autodiscoverService;
+    private readonly IEmailConnectionTestingService _connectionTestingService;
     private readonly EwsEmailService _ewsService;
     private readonly ImapEmailService _imapService;
     private readonly ILogger<AccountsController> _logger;
@@ -24,12 +25,14 @@ public class AccountsController : ControllerBase
     public AccountsController(
         POSTADbContext context,
         IExchangeAutodiscoverService autodiscoverService,
+        IEmailConnectionTestingService connectionTestingService,
         EwsEmailService ewsService,
         ImapEmailService imapService,
         ILogger<AccountsController> logger)
     {
         _context = context;
         _autodiscoverService = autodiscoverService;
+        _connectionTestingService = connectionTestingService;
         _ewsService = ewsService;
         _imapService = imapService;
         _logger = logger;
@@ -224,6 +227,67 @@ public class AccountsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error testing connection for {EmailAddress}", request.EmailAddress);
+            return StatusCode(500, new
+            {
+                Success = false,
+                Error = "Internal server error during connection test",
+                Message = ex.Message,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
+    [HttpPost("test-connection")]
+    [AllowAnonymous]
+    public async Task<IActionResult> TestConnectionDetailed([FromBody] ConnectionTestRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Starting detailed connection test for {EmailAddress}", request.EmailAddress);
+
+            var result = await _connectionTestingService.TestConnectionAsync(request);
+
+            var response = new
+            {
+                Success = result.Success,
+                EmailAddress = result.EmailAddress,
+                TestDuration = result.TestDuration.TotalSeconds,
+                TestSteps = result.TestSteps.Select(step => new
+                {
+                    step.Step,
+                    step.Status,
+                    step.Timestamp,
+                    step.Details
+                }),
+                ServerInfo = result.ServerInfo != null ? new
+                {
+                    result.ServerInfo.ServerType,
+                    result.ServerInfo.ServerHost,
+                    result.ServerInfo.ServerPort,
+                    result.ServerInfo.UseSsl,
+                    result.ServerInfo.EwsUrl,
+                    ConnectionTime = result.ServerInfo.ConnectionTime.TotalSeconds,
+                    result.ServerInfo.InboxMessageCount
+                } : null,
+                ErrorMessage = result.ErrorMessage,
+                Timestamp = DateTime.UtcNow
+            };
+
+            if (result.Success)
+            {
+                _logger.LogInformation("Detailed connection test successful for {EmailAddress}", request.EmailAddress);
+                return Ok(response);
+            }
+            else
+            {
+                _logger.LogWarning("Detailed connection test failed for {EmailAddress}: {Error}", 
+                    request.EmailAddress, result.ErrorMessage);
+                return BadRequest(response);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during detailed connection test for {EmailAddress}", request.EmailAddress);
             return StatusCode(500, new
             {
                 Success = false,
