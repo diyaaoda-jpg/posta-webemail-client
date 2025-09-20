@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngrx/store';
@@ -32,7 +32,7 @@ import { EmailStepComponent } from './steps/email-step.component';
         <h1>Let's set up your first email account to get started</h1>
       </div>
       
-      <mat-stepper [linear]="true" [selectedIndex]="getCurrentStepIndex()" #stepper class="account-stepper">
+      <mat-stepper [linear]="true" #stepper class="account-stepper">
         
         <!-- Step 1: Email Address -->
         <mat-step [completed]="isStepCompleted('email')" label="Email Address">
@@ -217,6 +217,7 @@ import { EmailStepComponent } from './steps/email-step.component';
   `]
 })
 export class AddAccountComponent implements OnInit, OnDestroy {
+  @ViewChild('stepper') stepper!: MatStepper;
   private destroy$ = new Subject<void>();
   
   // State management
@@ -250,6 +251,11 @@ export class AddAccountComponent implements OnInit, OnDestroy {
     this.completedSteps.add('email');
     this.currentStep = 'discovery';
     
+    // Manually advance to next step
+    setTimeout(() => {
+      this.stepper.next();
+    }, 100);
+    
     // Start discovery process
     this.discoveryLoading = true;
     
@@ -276,18 +282,21 @@ export class AddAccountComponent implements OnInit, OnDestroy {
   proceedToAuthentication(): void {
     this.completedSteps.add('discovery');
     this.currentStep = 'authentication';
+    this.stepper.next();
     console.log('Proceeding to authentication step');
   }
 
   proceedToManualSetup(): void {
     this.completedSteps.add('discovery');
     this.currentStep = 'authentication';
+    this.stepper.next();
     console.log('Proceeding to manual setup');
   }
 
   proceedToTesting(): void {
     this.completedSteps.add('authentication');
     this.currentStep = 'testing';
+    this.stepper.next();
     console.log('Proceeding to testing step');
   }
 
@@ -302,14 +311,4 @@ export class AddAccountComponent implements OnInit, OnDestroy {
     return this.completedSteps.has(step);
   }
 
-  getCurrentStepIndex(): number {
-    const stepMap: Record<string, number> = {
-      'email': 0,
-      'discovery': 1,
-      'authentication': 2,
-      'testing': 3,
-      'complete': 4
-    };
-    return stepMap[this.currentStep] || 0;
-  }
 }
