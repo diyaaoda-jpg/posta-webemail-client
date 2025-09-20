@@ -22,25 +22,18 @@ namespace POSTA.Infrastructure.Email.Services
             _logger = logger;
         }
 
-        public async Task<AutodiscoverResponse> DiscoverAsync(AutodiscoverRequest request)
+        public async Task<ExchangeServerConfig?> DiscoverAsync(string emailAddress)
         {
-            var response = new AutodiscoverResponse
-            {
-                EmailAddress = request.EmailAddress,
-                TriedUrls = new List<string>()
-            };
-
             try
             {
-                var domain = ExtractDomain(request.EmailAddress);
+                var domain = ExtractDomain(emailAddress);
                 if (string.IsNullOrEmpty(domain))
                 {
-                    response.ErrorMessage = "Invalid email address format";
-                    return response;
+                    return new ExchangeServerConfig { ErrorMessage = "Invalid email address format" };
                 }
 
                 // Try multiple autodiscovery methods in order of preference
-                var discoveryMethods = new List<Func<string, string, Task<AutodiscoverConfig?>>>
+                var discoveryMethods = new List<Func<string, string, Task<ExchangeServerConfig?>>>
                 {
                     TryExchangeAutodiscoverUrl,
                     TryDomainAutodiscoverUrl,
@@ -50,13 +43,10 @@ namespace POSTA.Infrastructure.Email.Services
 
                 foreach (var method in discoveryMethods)
                 {
-                    var config = await method(request.EmailAddress, domain);
+                    var config = await method(emailAddress, domain);
                     if (config != null)
                     {
-                        response.Success = true;
-                        response.Config = config;
-                        response.AutodiscoverMethod = config.AutodiscoverMethod;
-                        return response;
+                        return config;
                     }
                 }
 
@@ -64,36 +54,88 @@ namespace POSTA.Infrastructure.Email.Services
                 var commonConfig = TryCommonProviderPatterns(domain);
                 if (commonConfig != null)
                 {
-                    response.Success = true;
-                    response.Config = commonConfig;
-                    response.AutodiscoverMethod = "CommonProviderPattern";
-                    return response;
+                    return commonConfig;
                 }
 
-                response.ErrorMessage = "Could not automatically discover email settings";
-                return response;
+                return new ExchangeServerConfig { ErrorMessage = "Could not automatically discover email settings" };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during autodiscovery for {EmailAddress}", request.EmailAddress);
-                response.ErrorMessage = $"Autodiscovery failed: {ex.Message}";
-                return response;
+                _logger.LogError(ex, "Error during autodiscovery for {EmailAddress}", emailAddress);
+                return new ExchangeServerConfig { ErrorMessage = $"Autodiscovery failed: {ex.Message}" };
             }
         }
 
-        private async Task<AutodiscoverConfig?> TryExchangeAutodiscoverUrl(string emailAddress, string domain)
+        public async Task<ExchangeServerConfig?> DiscoverManualAsync(string emailAddress, string serverInput)
+        {
+            try
+            {
+                // Try to construct config from manual input
+                var config = new ExchangeServerConfig
+                {
+                    AutodiscoverMethod = "Manual"
+                };
+
+                // Check if serverInput looks like a URL
+                if (serverInput.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    config.EwsUrl = serverInput;
+                    config.ServerHost = ExtractHostFromUrl(serverInput);
+                    config.ServerPort = 443;
+                    config.UseSsl = true;
+                    config.DisplayName = $"{config.ServerHost} Exchange Server";
+                }
+                else
+                {
+                    // Assume it's a hostname
+                    config.ServerHost = serverInput;
+                    config.EwsUrl = $"https://{serverInput}/EWS/Exchange.asmx";
+                    config.ServerPort = 443;
+                    config.UseSsl = true;
+                    config.DisplayName = $"{serverInput} Exchange Server";
+                }
+
+                return config;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during manual discovery for {EmailAddress} with server {ServerInput}", emailAddress, serverInput);
+                return new ExchangeServerConfig { ErrorMessage = $"Manual discovery failed: {ex.Message}" };
+            }
+        }
+
+        public async Task<bool> TestConnectionAsync(ExchangeServerConfig config, string username, string password)
+        {
+            try
+            {
+                // Test if EWS endpoint is accessible
+                if (!string.IsNullOrEmpty(config.EwsUrl))
+                {
+                    var testResponse = await _httpClient.GetAsync(config.EwsUrl);
+                    return testResponse.IsSuccessStatusCode || testResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error testing connection for {ServerHost}", config.ServerHost);
+                return false;
+            }
+        }
+
+        private async Task<ExchangeServerConfig?> TryExchangeAutodiscoverUrl(string emailAddress, string domain)
         {
             var autodiscoverUrl = $"https://autodiscover.{domain}/autodiscover/autodiscover.xml";
             return await TryAutodiscoverUrl(autodiscoverUrl, emailAddress);
         }
 
-        private async Task<AutodiscoverConfig?> TryDomainAutodiscoverUrl(string emailAddress, string domain)
+        private async Task<ExchangeServerConfig?> TryDomainAutodiscoverUrl(string emailAddress, string domain)
         {
             var autodiscoverUrl = $"https://{domain}/autodiscover/autodiscover.xml";
             return await TryAutodiscoverUrl(autodiscoverUrl, emailAddress);
         }
 
-        private async Task<AutodiscoverConfig?> TryWellKnownEndpoints(string emailAddress, string domain)
+        private async Task<ExchangeServerConfig?> TryWellKnownEndpoints(string emailAddress, string domain)
         {
             var wellKnownUrls = new[]
             {
@@ -111,7 +153,7 @@ namespace POSTA.Infrastructure.Email.Services
             return null;
         }
 
-        private async Task<AutodiscoverConfig?> TryAutodiscoverUrl(string url, string emailAddress)
+        private async Task<ExchangeServerConfig?> TryAutodiscoverUrl(string url, string emailAddress)
         {
             try
             {
@@ -134,6 +176,7 @@ namespace POSTA.Infrastructure.Email.Services
                     if (config != null)
                     {
                         config.AutodiscoverMethod = "ExchangeAutodiscovery";
+                        config.TriedUrls.Add(url);
                         _logger.LogInformation("Successfully discovered settings via {Url}", url);
                         return config;
                     }
@@ -151,7 +194,7 @@ namespace POSTA.Infrastructure.Email.Services
             return null;
         }
 
-        private async Task<AutodiscoverConfig?> TryCommonExchangeSettings(string emailAddress, string domain)
+        private async Task<ExchangeServerConfig?> TryCommonExchangeSettings(string emailAddress, string domain)
         {
             // Try common Exchange Online patterns
             var commonExchangeHosts = new[]
@@ -172,7 +215,7 @@ namespace POSTA.Infrastructure.Email.Services
                     
                     if (testResponse.IsSuccessStatusCode || testResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
-                        return new AutodiscoverConfig
+                        return new ExchangeServerConfig
                         {
                             ServerHost = host,
                             ServerPort = 443,
@@ -192,12 +235,12 @@ namespace POSTA.Infrastructure.Email.Services
             return null;
         }
 
-        private AutodiscoverConfig? TryCommonProviderPatterns(string domain)
+        private ExchangeServerConfig? TryCommonProviderPatterns(string domain)
         {
             // Gmail
             if (domain.Contains("gmail.com") || domain.Contains("googlemail.com"))
             {
-                return new AutodiscoverConfig
+                return new ExchangeServerConfig
                 {
                     ServerHost = "imap.gmail.com",
                     ServerPort = 993,
@@ -210,7 +253,7 @@ namespace POSTA.Infrastructure.Email.Services
             // Outlook.com / Hotmail
             if (domain.Contains("outlook.com") || domain.Contains("hotmail.com") || domain.Contains("live.com"))
             {
-                return new AutodiscoverConfig
+                return new ExchangeServerConfig
                 {
                     ServerHost = "outlook.office365.com",
                     ServerPort = 993,
@@ -224,7 +267,7 @@ namespace POSTA.Infrastructure.Email.Services
             // Yahoo
             if (domain.Contains("yahoo.com"))
             {
-                return new AutodiscoverConfig
+                return new ExchangeServerConfig
                 {
                     ServerHost = "imap.mail.yahoo.com",
                     ServerPort = 993,
@@ -244,7 +287,7 @@ namespace POSTA.Infrastructure.Email.Services
 
             foreach (var host in genericImapHosts)
             {
-                return new AutodiscoverConfig
+                return new ExchangeServerConfig
                 {
                     ServerHost = host,
                     ServerPort = 993,
@@ -268,7 +311,7 @@ namespace POSTA.Infrastructure.Email.Services
 </Autodiscover>";
         }
 
-        private AutodiscoverConfig? ParseAutodiscoverResponse(string responseXml)
+        private ExchangeServerConfig? ParseAutodiscoverResponse(string responseXml)
         {
             try
             {
@@ -286,7 +329,7 @@ namespace POSTA.Infrastructure.Email.Services
 
                     if (!string.IsNullOrEmpty(ewsUrl))
                     {
-                        return new AutodiscoverConfig
+                        return new ExchangeServerConfig
                         {
                             ServerHost = ExtractHostFromUrl(ewsUrl) ?? serverName ?? "outlook.office365.com",
                             ServerPort = 443,
@@ -310,7 +353,7 @@ namespace POSTA.Infrastructure.Email.Services
 
                     if (!string.IsNullOrEmpty(server) && int.TryParse(portStr, out var port))
                     {
-                        return new AutodiscoverConfig
+                        return new ExchangeServerConfig
                         {
                             ServerHost = server,
                             ServerPort = port,
@@ -331,13 +374,11 @@ namespace POSTA.Infrastructure.Email.Services
 
         private string ExtractDomain(string emailAddress)
         {
-            var atIndex = emailAddress.LastIndexOf('@');
-            return atIndex > 0 && atIndex < emailAddress.Length - 1 
-                ? emailAddress.Substring(atIndex + 1) 
-                : string.Empty;
+            var parts = emailAddress.Split('@');
+            return parts.Length == 2 ? parts[1] : string.Empty;
         }
 
-        private string? ExtractHostFromUrl(string url)
+        private string ExtractHostFromUrl(string url)
         {
             try
             {
@@ -346,34 +387,8 @@ namespace POSTA.Infrastructure.Email.Services
             }
             catch
             {
-                return null;
+                return url;
             }
         }
-    }
-
-    // Updated interfaces and models
-    public class AutodiscoverRequest
-    {
-        public string EmailAddress { get; set; } = string.Empty;
-    }
-
-    public class AutodiscoverResponse
-    {
-        public string EmailAddress { get; set; } = string.Empty;
-        public bool Success { get; set; }
-        public AutodiscoverConfig? Config { get; set; }
-        public string? AutodiscoverMethod { get; set; }
-        public List<string> TriedUrls { get; set; } = new();
-        public string? ErrorMessage { get; set; }
-    }
-
-    public class AutodiscoverConfig
-    {
-        public string ServerHost { get; set; } = string.Empty;
-        public int ServerPort { get; set; }
-        public bool UseSsl { get; set; }
-        public string? EwsUrl { get; set; }
-        public string DisplayName { get; set; } = string.Empty;
-        public string AutodiscoverMethod { get; set; } = string.Empty;
     }
 }
