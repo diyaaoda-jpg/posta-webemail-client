@@ -74,10 +74,11 @@ import { AuthenticationStepComponent, AuthenticationData } from './steps/authent
         
         <!-- Step 3: Authentication -->
         <mat-step [completed]="isStepCompleted('authentication')" label="Authentication">
-          <app-authentication-step 
+          <app-authentication-step
             [emailAddress]="submittedEmail"
             [discoveryResult]="discoveryResult"
             [requiresManualConfig]="!discoveryResult?.success"
+            [isLoading]="testingLoading"
             (credentialsSubmitted)="onCredentialsSubmitted($event)">
           </app-authentication-step>
         </mat-step>
@@ -317,14 +318,14 @@ export class AddAccountComponent implements OnInit, OnDestroy {
     // Start connection testing
     this.testingLoading = true;
     
-    // Prepare connection test request
+    // Prepare connection test request (simplified format for test-connection endpoint)
     const testRequest = {
       EmailAddress: this.submittedEmail,
       Password: authData.password,
       ServerHost: authData.manualConfig?.serverHost || this.discoveryResult?.config?.serverHost || 'outlook.office365.com',
-      ServerPort: authData.manualConfig?.serverPort || this.discoveryResult?.config?.serverPort || 993,
+      ServerPort: authData.manualConfig?.serverPort || this.discoveryResult?.config?.serverPort || 443,
       UseSsl: authData.manualConfig?.useSsl !== undefined ? authData.manualConfig.useSsl : (this.discoveryResult?.config?.useSsl || true),
-      EwsUrl: authData.manualConfig?.ewsUrl || this.discoveryResult?.config?.ewsUrl
+      EwsUrl: authData.manualConfig?.ewsUrl || this.discoveryResult?.config?.ewsUrl || `https://${authData.manualConfig?.serverHost || 'outlook.office365.com'}/EWS/Exchange.asmx`
     };
     
     console.log('Testing connection with request:', testRequest);

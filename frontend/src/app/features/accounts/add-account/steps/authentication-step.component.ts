@@ -49,11 +49,23 @@ export interface AuthenticationData {
 
       <form [formGroup]="authForm" (ngSubmit)="onSubmit()" class="auth-form">
         
-        <!-- Email (readonly) -->
+        <!-- Email (editable for manual config) -->
         <mat-form-field appearance="outline" class="form-field">
           <mat-label>Email Address</mat-label>
-          <input matInput formControlName="email" readonly>
+          <input
+            matInput
+            formControlName="email"
+            [readonly]="!requiresManualConfig"
+            type="email"
+            placeholder="Enter your email address">
           <mat-icon matSuffix>email</mat-icon>
+          <mat-hint *ngIf="requiresManualConfig">You can edit your email address if needed</mat-hint>
+          <mat-error *ngIf="authForm.get('email')?.hasError('required')">
+            Email address is required
+          </mat-error>
+          <mat-error *ngIf="authForm.get('email')?.hasError('email')">
+            Please enter a valid email address
+          </mat-error>
         </mat-form-field>
 
         <!-- Password -->
@@ -114,58 +126,63 @@ export interface AuthenticationData {
           </mat-expansion-panel-header>
 
           <div formGroupName="manualConfig" class="manual-config-form">
-            
+
             <!-- Server Type -->
             <mat-form-field appearance="outline" class="form-field">
               <mat-label>Server Type</mat-label>
-              <mat-select formControlName="serverType">
+              <mat-select formControlName="serverType" (selectionChange)="onServerTypeChange()">
                 <mat-option value="EWS">Exchange Web Services (EWS)</mat-option>
                 <mat-option value="IMAP">IMAP</mat-option>
               </mat-select>
+              <mat-hint>Choose your email server protocol</mat-hint>
             </mat-form-field>
 
             <!-- Server Host -->
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Server Host</mat-label>
-              <input 
-                matInput 
-                formControlName="serverHost" 
-                placeholder="e.g., outlook.office365.com">
+              <mat-label>{{ getServerHostLabel() }}</mat-label>
+              <input
+                matInput
+                formControlName="serverHost"
+                [placeholder]="getServerHostPlaceholder()">
+              <mat-hint>{{ getServerHostHint() }}</mat-hint>
               <mat-error *ngIf="authForm.get('manualConfig.serverHost')?.hasError('required')">
                 Server host is required
               </mat-error>
             </mat-form-field>
 
-            <!-- Server Port -->
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Server Port</mat-label>
-              <input 
-                matInput 
-                formControlName="serverPort" 
-                type="number"
-                placeholder="e.g., 993">
-              <mat-error *ngIf="authForm.get('manualConfig.serverPort')?.hasError('required')">
-                Server port is required
-              </mat-error>
-            </mat-form-field>
+            <!-- IMAP-specific fields -->
+            <div *ngIf="isIMAPSelected()" class="imap-specific">
+              <!-- Server Port for IMAP -->
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Server Port</mat-label>
+                <input
+                  matInput
+                  formControlName="serverPort"
+                  type="number"
+                  placeholder="993">
+                <mat-hint>Usually 993 for IMAP with SSL, 143 without SSL</mat-hint>
+                <mat-error *ngIf="authForm.get('manualConfig.serverPort')?.hasError('required')">
+                  Server port is required
+                </mat-error>
+              </mat-form-field>
 
-            <!-- EWS URL (if EWS selected) -->
-            <mat-form-field 
-              *ngIf="authForm.get('manualConfig.serverType')?.value === 'EWS'" 
-              appearance="outline" 
-              class="form-field">
-              <mat-label>EWS URL</mat-label>
-              <input 
-                matInput 
-                formControlName="ewsUrl" 
-                placeholder="e.g., https://outlook.office365.com/EWS/Exchange.asmx">
-            </mat-form-field>
+              <!-- SSL/TLS for IMAP -->
+              <div class="ssl-option">
+                <mat-checkbox formControlName="useSsl">
+                  Use SSL/TLS encryption (recommended)
+                </mat-checkbox>
+              </div>
+            </div>
 
-            <!-- SSL/TLS -->
-            <div class="ssl-option">
-              <mat-checkbox formControlName="useSsl">
-                Use SSL/TLS encryption (recommended)
-              </mat-checkbox>
+            <!-- EWS-specific info -->
+            <div *ngIf="isEWSSelected()" class="ews-info">
+              <div class="info-card">
+                <mat-icon>info</mat-icon>
+                <div class="info-content">
+                  <p><strong>Exchange Web Services (EWS)</strong></p>
+                  <p>EWS automatically uses HTTPS/SSL and standard ports. Just provide your Exchange server name.</p>
+                </div>
+              </div>
             </div>
           </div>
         </mat-expansion-panel>
@@ -302,17 +319,54 @@ export interface AuthenticationData {
     ::ng-deep .mat-expansion-panel-header-title mat-icon {
       margin-right: 8px;
     }
+
+    .imap-specific {
+      margin-top: 16px;
+      padding: 16px;
+      background-color: #f3f4f6;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .ews-info {
+      margin-top: 16px;
+    }
+
+    .info-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background-color: #e0f2fe;
+      border-radius: 8px;
+      border-left: 4px solid #0288d1;
+    }
+
+    .info-card mat-icon {
+      color: #0288d1;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .info-content p {
+      margin: 0 0 8px 0;
+      color: #01579b;
+    }
+
+    .info-content p:last-child {
+      margin-bottom: 0;
+    }
   `]
 })
 export class AuthenticationStepComponent implements OnInit {
   @Input() emailAddress = '';
   @Input() discoveryResult: any = null;
   @Input() requiresManualConfig = false;
+  @Input() isLoading = false; // Loading state controlled by parent
   @Output() credentialsSubmitted = new EventEmitter<AuthenticationData>();
 
   authForm!: FormGroup;
   showPassword = false;
-  isLoading = false;
 
   constructor(private formBuilder: FormBuilder) {}
 
@@ -330,16 +384,20 @@ export class AuthenticationStepComponent implements OnInit {
       manualConfig: this.formBuilder.group({
         serverType: ['EWS'],
         serverHost: [''],
-        serverPort: [993, [Validators.min(1), Validators.max(65535)]],
-        useSsl: [true],
-        ewsUrl: ['']
+        serverPort: [443], // Default to HTTPS port
+        useSsl: [true]
       })
     });
 
     // Add validators for manual config if required
     if (this.requiresManualConfig) {
       this.authForm.get('manualConfig.serverHost')?.setValidators([Validators.required]);
-      this.authForm.get('manualConfig.serverPort')?.setValidators([Validators.required, Validators.min(1), Validators.max(65535)]);
+
+      // Ensure email validation is active for manual config
+      this.authForm.get('email')?.updateValueAndValidity();
+
+      // Set up initial validators based on server type
+      this.onServerTypeChange();
     }
   }
 
@@ -380,8 +438,6 @@ export class AuthenticationStepComponent implements OnInit {
 
   onSubmit(): void {
     if (this.authForm.valid) {
-      this.isLoading = true;
-      
       const formValue = this.authForm.value;
       const authData: AuthenticationData = {
         email: formValue.email,
@@ -392,16 +448,91 @@ export class AuthenticationStepComponent implements OnInit {
 
       // Include manual config if required
       if (this.requiresManualConfig) {
-        authData.manualConfig = formValue.manualConfig;
+        authData.manualConfig = this.processManualConfig(formValue.manualConfig);
       }
 
-      // Simulate processing delay
-      setTimeout(() => {
-        this.credentialsSubmitted.emit(authData);
-        this.isLoading = false;
-      }, 1500);
+      // Emit immediately - parent will handle loading states and connection testing
+      this.credentialsSubmitted.emit(authData);
     } else {
       this.authForm.markAllAsTouched();
     }
+  }
+
+  private processManualConfig(manualConfig: any): { serverHost: string; serverPort: number; useSsl: boolean; serverType: 'IMAP' | 'EWS'; ewsUrl?: string } {
+    if (manualConfig.serverType === 'EWS') {
+      // Auto-generate EWS URL from server host
+      const serverHost = manualConfig.serverHost;
+      return {
+        serverHost,
+        serverPort: 443, // Standard HTTPS port for EWS
+        useSsl: true, // Always true for EWS
+        serverType: 'EWS' as const,
+        ewsUrl: `https://${serverHost}/EWS/Exchange.asmx`
+      };
+    } else {
+      // IMAP configuration as provided by user
+      return {
+        serverHost: manualConfig.serverHost,
+        serverPort: manualConfig.serverPort,
+        useSsl: manualConfig.useSsl,
+        serverType: 'IMAP' as const
+      };
+    }
+  }
+
+  onServerTypeChange(): void {
+    const serverType = this.authForm.get('manualConfig.serverType')?.value;
+
+    if (serverType === 'EWS') {
+      // Set EWS defaults and remove IMAP-specific validators
+      this.authForm.patchValue({
+        manualConfig: {
+          serverPort: 443,
+          useSsl: true
+        }
+      });
+
+      // Remove port and SSL validators for EWS
+      this.authForm.get('manualConfig.serverPort')?.clearValidators();
+    } else {
+      // Set IMAP defaults and add validators
+      this.authForm.patchValue({
+        manualConfig: {
+          serverPort: 993,
+          useSsl: true
+        }
+      });
+
+      // Add port validator for IMAP
+      this.authForm.get('manualConfig.serverPort')?.setValidators([
+        Validators.required,
+        Validators.min(1),
+        Validators.max(65535)
+      ]);
+    }
+
+    this.authForm.get('manualConfig.serverPort')?.updateValueAndValidity();
+  }
+
+  isEWSSelected(): boolean {
+    return this.authForm.get('manualConfig.serverType')?.value === 'EWS';
+  }
+
+  isIMAPSelected(): boolean {
+    return this.authForm.get('manualConfig.serverType')?.value === 'IMAP';
+  }
+
+  getServerHostLabel(): string {
+    return this.isEWSSelected() ? 'Exchange Server' : 'IMAP Server';
+  }
+
+  getServerHostPlaceholder(): string {
+    return this.isEWSSelected() ? 'outlook.office365.com' : 'imap.gmail.com';
+  }
+
+  getServerHostHint(): string {
+    return this.isEWSSelected()
+      ? 'Enter your Exchange server hostname'
+      : 'Enter your IMAP server hostname';
   }
 }
