@@ -66,7 +66,7 @@ namespace POSTA.Infrastructure.Email.Services
             }
         }
 
-        public async Task<ExchangeServerConfig?> DiscoverManualAsync(string emailAddress, string serverInput)
+        public Task<ExchangeServerConfig?> DiscoverManualAsync(string emailAddress, string serverInput)
         {
             try
             {
@@ -95,12 +95,12 @@ namespace POSTA.Infrastructure.Email.Services
                     config.DisplayName = $"{serverInput} Exchange Server";
                 }
 
-                return config;
+                return Task.FromResult<ExchangeServerConfig?>(config);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during manual discovery for {EmailAddress} with server {ServerInput}", emailAddress, serverInput);
-                return new ExchangeServerConfig { ErrorMessage = $"Manual discovery failed: {ex.Message}" };
+                return Task.FromResult<ExchangeServerConfig?>(new ExchangeServerConfig { ErrorMessage = $"Manual discovery failed: {ex.Message}" });
             }
         }
 

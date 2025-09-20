@@ -6,8 +6,28 @@ using System.Text;
 using POSTA.Infrastructure.Data;
 using POSTA.Core.Interfaces;
 using POSTA.Infrastructure.Email.Services;
+using POSTA.Api.Middleware;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+    .MinimumLevel.Override("POSTA", LogEventLevel.Debug)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "POSTA")
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} <s:{SourceContext}>{NewLine}{Exception}")
+    .WriteTo.File("logs/posta-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Configure port for deployment vs development
 var port = Environment.GetEnvironmentVariable("PORT") ?? "3000";
@@ -62,6 +82,24 @@ builder.Services.AddDbContext<POSTADbContext>(options =>
     options.UseNpgsql(GetConnectionString()));
 
 // Authentication
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+    ?? throw new InvalidOperationException("JWT secret key must be provided via configuration or JWT_SECRET_KEY environment variable");
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+    ?? Environment.GetEnvironmentVariable("JWT_ISSUER")
+    ?? "POSTA";
+
+var jwtAudience = builder.Configuration["Jwt:Audience"]
+    ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+    ?? "POSTA-Clients";
+
+// Validate JWT key strength
+if (jwtKey.Length < 32)
+{
+    throw new InvalidOperationException("JWT secret key must be at least 32 characters long for security");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -71,10 +109,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "POSTA",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "POSTA-Clients",
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "POSTA-JWT-Secret-Key-2024-Super-Secure"))
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.FromMinutes(1) // Reduce default clock skew
         };
     });
 
@@ -153,6 +191,35 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Global exception handling
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
+// Security headers middleware
+app.Use(async (context, next) =>
+{
+    // Security headers
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    // Remove server header for security
+    context.Response.Headers.Remove("Server");
+
+    await next();
+});
+
+// Request logging
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+    options.GetLevel = (httpContext, elapsed, ex) => ex != null
+        ? LogEventLevel.Error
+        : httpContext.Response.StatusCode > 499
+            ? LogEventLevel.Error
+            : LogEventLevel.Information;
+});
+
 // Middleware pipeline
 app.UseCors("AllowAll");
 app.UseAuthentication();
@@ -187,3 +254,6 @@ Console.WriteLine("📧 Email API ready for connections");
 
 // Force LSP refresh
 app.Run();
+
+// Make Program class accessible for integration tests
+public partial class Program { }

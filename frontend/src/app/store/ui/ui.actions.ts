@@ -13,7 +13,7 @@ export const UIActions = createActionGroup({
     'Set Theme': props<{ theme: 'light' | 'dark' }>(),
     
     // Dialogs
-    'Open Compose Dialog': emptyProps(),
+    'Open Compose Dialog': props<{ composeData?: any }>(),
     'Close Compose Dialog': emptyProps(),
     'Open Settings Dialog': emptyProps(),
     'Close Settings Dialog': emptyProps(),
@@ -37,6 +37,9 @@ export const UIActions = createActionGroup({
     'Show Error': props<{ message: string }>(),
     'Show Success': props<{ message: string }>(),
     'Show Warning': props<{ message: string }>(),
-    'Show Info': props<{ message: string }>()
+    'Show Info': props<{ message: string }>(),
+
+    // Snackbar
+    'Show Snackbar': props<{ message: string; duration?: number }>()
   }
 });

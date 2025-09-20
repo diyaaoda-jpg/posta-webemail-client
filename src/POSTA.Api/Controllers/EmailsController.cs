@@ -144,4 +144,31 @@ public class EmailsController : ControllerBase
             return StatusCode(500, "Failed to delete email");
         }
     }
+
+    [HttpPatch("{id}/move")]
+    public async Task<IActionResult> MoveToFolder(Guid id, [FromBody] MoveEmailRequest request)
+    {
+        try
+        {
+            var email = await _context.EmailMessages.FindAsync(id);
+            if (email == null)
+                return NotFound("Email not found");
+
+            email.FolderName = request.Folder;
+            email.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, folder = request.Folder });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error moving email {EmailId} to folder {Folder}", id, request.Folder);
+            return StatusCode(500, "Failed to move email");
+        }
+    }
+}
+
+public class MoveEmailRequest
+{
+    public string Folder { get; set; } = string.Empty;
 }

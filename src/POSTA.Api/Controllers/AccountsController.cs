@@ -59,7 +59,7 @@ public class AccountsController : ControllerBase
             {
                 Success = success,
                 EmailAddress = request.EmailAddress,
-                Config = success ? new
+                Config = success && config != null ? new
                 {
                     config.EwsUrl,
                     config.ServerHost,
@@ -132,7 +132,7 @@ public class AccountsController : ControllerBase
                 Success = success,
                 EmailAddress = request.EmailAddress,
                 ServerInput = request.ServerInput,
-                Config = success ? new
+                Config = success && config != null ? new
                 {
                     config.EwsUrl,
                     config.ServerHost,

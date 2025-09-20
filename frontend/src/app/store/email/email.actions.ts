@@ -26,6 +26,10 @@ export const EmailActions = createActionGroup({
     'Delete Email': props<{ id: string }>(),
     'Delete Email Success': props<{ id: string }>(),
     'Delete Email Failure': props<{ error: string }>(),
+
+    'Move To Folder': props<{ id: string; folder: string }>(),
+    'Move To Folder Success': props<{ id: string; folder: string }>(),
+    'Move To Folder Failure': props<{ error: string }>(),
     
     // Email Accounts
     'Load Accounts': emptyProps(),

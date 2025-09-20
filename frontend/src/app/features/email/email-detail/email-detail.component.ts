@@ -498,18 +498,53 @@ export class EmailDetailComponent implements OnInit {
   }
 
   reply(): void {
-    this.store.dispatch(UIActions.openComposeDialog());
-    // TODO: Implement reply functionality
+    const currentEmail = this.email();
+    if (currentEmail) {
+      const replyData = {
+        type: 'reply',
+        to: currentEmail.fromAddress,
+        subject: currentEmail.subject.startsWith('Re:') ? currentEmail.subject : `Re: ${currentEmail.subject}`,
+        inReplyTo: currentEmail.id,
+        originalBody: currentEmail.htmlBody || currentEmail.textBody || ''
+      };
+      this.store.dispatch(UIActions.openComposeDialog({ composeData: replyData }));
+    }
   }
 
   replyAll(): void {
-    this.store.dispatch(UIActions.openComposeDialog());
-    // TODO: Implement reply all functionality
+    const currentEmail = this.email();
+    if (currentEmail) {
+      // Combine original recipients excluding sender's email
+      const allRecipients = [currentEmail.fromAddress];
+      if (currentEmail.toAddresses) {
+        allRecipients.push(...currentEmail.toAddresses.split(',').map(addr => addr.trim()));
+      }
+      if (currentEmail.ccAddresses) {
+        allRecipients.push(...currentEmail.ccAddresses.split(',').map(addr => addr.trim()));
+      }
+
+      const replyAllData = {
+        type: 'replyAll',
+        to: allRecipients.filter((addr, index, self) => self.indexOf(addr) === index).join(', '),
+        subject: currentEmail.subject.startsWith('Re:') ? currentEmail.subject : `Re: ${currentEmail.subject}`,
+        inReplyTo: currentEmail.id,
+        originalBody: currentEmail.htmlBody || currentEmail.textBody || ''
+      };
+      this.store.dispatch(UIActions.openComposeDialog({ composeData: replyAllData }));
+    }
   }
 
   forward(): void {
-    this.store.dispatch(UIActions.openComposeDialog());
-    // TODO: Implement forward functionality
+    const currentEmail = this.email();
+    if (currentEmail) {
+      const forwardData = {
+        type: 'forward',
+        subject: currentEmail.subject.startsWith('Fwd:') ? currentEmail.subject : `Fwd: ${currentEmail.subject}`,
+        originalBody: this.buildForwardBody(currentEmail),
+        attachments: currentEmail.attachments || []
+      };
+      this.store.dispatch(UIActions.openComposeDialog({ composeData: forwardData }));
+    }
   }
 
   toggleFlag(): void {
@@ -541,8 +576,17 @@ export class EmailDetailComponent implements OnInit {
   }
 
   moveToFolder(folder: string): void {
-    // TODO: Implement folder move functionality
-    console.log('Move to folder:', folder);
+    const currentEmail = this.email();
+    if (currentEmail) {
+      this.store.dispatch(EmailActions.moveToFolder({
+        id: currentEmail.id,
+        folder
+      }));
+      // Show success message
+      this.store.dispatch(UIActions.showSnackbar({
+        message: `Email moved to ${folder.toLowerCase()}`
+      }));
+    }
   }
 
   sanitizeHtml(html: string): SafeHtml {
@@ -559,5 +603,20 @@ export class EmailDetailComponent implements OnInit {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  private buildForwardBody(email: any): string {
+    const forwardHeader = `
+
+---------- Forwarded message ---------
+From: ${email.fromName || email.fromAddress} <${email.fromAddress}>
+Date: ${this.formatDateTime(email.receivedAt)}
+Subject: ${email.subject}
+To: ${email.toAddresses}
+${email.ccAddresses ? `CC: ${email.ccAddresses}\n` : ''}
+
+`;
+
+    return forwardHeader + (email.htmlBody || email.textBody || '');
   }
 }

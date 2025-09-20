@@ -13,6 +13,7 @@ requiredFiles = [".replit", "replit.nix"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["wget"]
 
 [deployment]
 run = ["sh", "-c", "cd src/POSTA.Api && dotnet run"]
@@ -94,3 +95,7 @@ externalPort = 5173
 [[ports]]
 localPort = 8080
 externalPort = 8080
+
+[[ports]]
+localPort = 34895
+externalPort = 3001
