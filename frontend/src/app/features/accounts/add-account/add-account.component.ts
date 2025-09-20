@@ -9,7 +9,7 @@ import { takeUntil } from 'rxjs/operators';
 
 // Import your step components
 import { EmailStepComponent } from './steps/email-step.component';
-// Import other step components as needed
+import { AuthenticationStepComponent, AuthenticationData } from './steps/authentication-step.component';
 
 // Import your store actions and selectors
 // import * as AccountsActions from '../../store/accounts/accounts.actions';
@@ -23,8 +23,8 @@ import { EmailStepComponent } from './steps/email-step.component';
     MatStepperModule,
     MatButtonModule,
     MatIconModule,
-    EmailStepComponent
-    // Add other step components here
+    EmailStepComponent,
+    AuthenticationStepComponent
   ],
   template: `
     <div class="add-account-container">
@@ -73,14 +73,12 @@ import { EmailStepComponent } from './steps/email-step.component';
         
         <!-- Step 3: Authentication -->
         <mat-step [completed]="isStepCompleted('authentication')" label="Authentication">
-          <div class="step-content">
-            <h3>Enter your credentials</h3>
-            <p>Please provide your email password to complete the setup.</p>
-            <!-- Add authentication form here -->
-            <button mat-raised-button color="primary" (click)="proceedToTesting()">
-              Test Connection
-            </button>
-          </div>
+          <app-authentication-step 
+            [emailAddress]="submittedEmail"
+            [discoveryResult]="discoveryResult"
+            [requiresManualConfig]="!discoveryResult?.success"
+            (credentialsSubmitted)="onCredentialsSubmitted($event)">
+          </app-authentication-step>
         </mat-step>
         
         <!-- Step 4: Testing -->
@@ -225,6 +223,8 @@ export class AddAccountComponent implements OnInit, OnDestroy {
   discoveryLoading = false;
   currentStep = 'email';
   completedSteps = new Set<string>();
+  submittedEmail = '';
+  authenticationData: AuthenticationData | null = null;
 
   constructor(private store: Store) {}
 
@@ -246,6 +246,9 @@ export class AddAccountComponent implements OnInit, OnDestroy {
 
   onEmailSubmitted(emailAddress: string): void {
     console.log('Email submitted:', emailAddress);
+    
+    // Store the submitted email
+    this.submittedEmail = emailAddress;
     
     // Mark email step as completed
     this.completedSteps.add('email');
@@ -293,11 +296,40 @@ export class AddAccountComponent implements OnInit, OnDestroy {
     console.log('Proceeding to manual setup');
   }
 
+  onCredentialsSubmitted(authData: AuthenticationData): void {
+    console.log('Credentials submitted:', authData);
+    
+    // Store authentication data
+    this.authenticationData = authData;
+    
+    // Mark authentication step as completed
+    this.completedSteps.add('authentication');
+    this.currentStep = 'testing';
+    
+    // Advance to testing step
+    setTimeout(() => {
+      this.stepper.next();
+    }, 100);
+    
+    // TODO: Call backend API to test connection and create account
+    // For now, simulate testing process
+    setTimeout(() => {
+      this.proceedToComplete();
+    }, 3000);
+  }
+
   proceedToTesting(): void {
     this.completedSteps.add('authentication');
     this.currentStep = 'testing';
     this.stepper.next();
     console.log('Proceeding to testing step');
+  }
+
+  proceedToComplete(): void {
+    this.completedSteps.add('testing');
+    this.currentStep = 'complete';
+    this.stepper.next();
+    console.log('Testing completed successfully');
   }
 
   finishSetup(): void {
