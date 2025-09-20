@@ -1,0 +1,43 @@
+{
+  "name": "POSTA Email Client",
+  "short_name": "POSTA",
+  "description": "Modern email client for managing multiple email accounts",
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iOCIgZmlsbD0iIzY2N2VlYSIvPgo8cGF0aCBkPSJNMTIgMTZoMjR2MkgxMnYtMnptMCA2aDI0djJIMTJ2LTJ6bTAgNmgxNnYySDE2di0yeiIgZmlsbD0iI2ZmZiIvPgo8L3N2Zz4K",
+      "sizes": "48x48",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzIiIGhlaWdodD0iNzIiIHZpZXdCb3g9IjAgMCA3MiA3MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjcyIiBoZWlnaHQ9IjcyIiByeD0iMTIiIGZpbGw9IiM2NjdlZWEiLz4KPHA5aCBkPSJNMTggMjRoMzZ2M0gxOHYtM3ptMCA5aDM2djNIMTh2LTN6bTAgOWgyNHYzSDE4di0zeiIgZmlsbD0iI2ZmZiIvPgo8L3N2Zz4K",
+      "sizes": "72x72",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTYiIGZpbGw9IiM2NjdlZWEiLz4KPHA9aCBkPSJNMjQgMzJoNDh2NEgyNHYtNHptMCAxMmg0OHY0SDI0di00em0wIDEyaDMyczJIMjR2LTR6IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPgo=",
+      "sizes": "96x96",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0IiBoZWlnaHQ9IjE0NCIgdmlld0JveD0iMCAwIDE0NCAxNDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHA9aCBkPSJNMzYgNDhoNzJ2NkgzNnYtNnptMCAxOGg3MnY2SDM2di02em0wIDE4aDQ4djZIMzZ2LTZ6IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPgo=",
+      "sizes": "144x144",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMzIiIGZpbGw9IiM2NjdlZWEiLz4KPHA9aCBkPSJNNDggNjRoOTZ2OEg0OHYtOHptMCAyNGg5NnY4SDQ4di04em0wIDI0aDY0djhINDh2LTh6IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPgo=",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iODQiIGZpbGw9IiM2NjdlZWEiLz4KPHA9aCBkPSJNMTI4IDE3Mmg2NHYyMUgxMjh2LTIxem0wIDY0aDI1NnYyMUgxMjh2LTIxem0wIDY0aDI1NnYyMUgxMjh2LTIxem0wIDY0aDE3MXYyMUgxMjh2LTIxeiIgZmlsbD0iI2ZmZiIvPgo8L3N2Zz4K",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
