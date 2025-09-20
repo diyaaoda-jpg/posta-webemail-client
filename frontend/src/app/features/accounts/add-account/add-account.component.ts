@@ -32,7 +32,7 @@ import { EmailStepComponent } from './steps/email-step.component';
         <h1>Let's set up your first email account to get started</h1>
       </div>
       
-      <mat-stepper [linear]="true" #stepper class="account-stepper">
+      <mat-stepper [linear]="true" [selectedIndex]="getCurrentStepIndex()" #stepper class="account-stepper">
         
         <!-- Step 1: Email Address -->
         <mat-step [completed]="isStepCompleted('email')" label="Email Address">
@@ -211,10 +211,6 @@ import { EmailStepComponent } from './steps/email-step.component';
       padding: 24px;
     }
     
-    ::ng-deep .mat-step-header {
-      pointer-events: none;
-    }
-    
     ::ng-deep .mat-step-header.cdk-program-focused {
       background-color: transparent;
     }
@@ -304,5 +300,16 @@ export class AddAccountComponent implements OnInit, OnDestroy {
 
   isStepCompleted(step: string): boolean {
     return this.completedSteps.has(step);
+  }
+
+  getCurrentStepIndex(): number {
+    const stepMap: Record<string, number> = {
+      'email': 0,
+      'discovery': 1,
+      'authentication': 2,
+      'testing': 3,
+      'complete': 4
+    };
+    return stepMap[this.currentStep] || 0;
   }
 }
