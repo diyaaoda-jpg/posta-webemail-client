@@ -175,7 +175,7 @@ export class HeaderComponent {
   theme = this.store.selectSignal(selectTheme);
 
   openCompose(): void {
-    this.store.dispatch(UIActions.openComposeDialog());
+    this.store.dispatch(UIActions.openComposeDialog({ composeData: undefined }));
   }
 
   openSettings(): void {

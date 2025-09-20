@@ -503,7 +503,7 @@ export class EmailDetailComponent implements OnInit {
       const replyData = {
         type: 'reply',
         to: currentEmail.fromAddress,
-        subject: currentEmail.subject.startsWith('Re:') ? currentEmail.subject : `Re: ${currentEmail.subject}`,
+        subject: currentEmail.subject?.startsWith('Re:') ? currentEmail.subject : `Re: ${currentEmail.subject || 'No Subject'}`,
         inReplyTo: currentEmail.id,
         originalBody: currentEmail.htmlBody || currentEmail.textBody || ''
       };
@@ -526,7 +526,7 @@ export class EmailDetailComponent implements OnInit {
       const replyAllData = {
         type: 'replyAll',
         to: allRecipients.filter((addr, index, self) => self.indexOf(addr) === index).join(', '),
-        subject: currentEmail.subject.startsWith('Re:') ? currentEmail.subject : `Re: ${currentEmail.subject}`,
+        subject: currentEmail.subject?.startsWith('Re:') ? currentEmail.subject : `Re: ${currentEmail.subject || 'No Subject'}`,
         inReplyTo: currentEmail.id,
         originalBody: currentEmail.htmlBody || currentEmail.textBody || ''
       };
@@ -539,7 +539,7 @@ export class EmailDetailComponent implements OnInit {
     if (currentEmail) {
       const forwardData = {
         type: 'forward',
-        subject: currentEmail.subject.startsWith('Fwd:') ? currentEmail.subject : `Fwd: ${currentEmail.subject}`,
+        subject: currentEmail.subject?.startsWith('Fwd:') ? currentEmail.subject : `Fwd: ${currentEmail.subject || 'No Subject'}`,
         originalBody: this.buildForwardBody(currentEmail),
         attachments: currentEmail.attachments || []
       };
